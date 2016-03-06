@@ -1,0 +1,2 @@
+Fusionner cellules : 
+cell->SetRowColSpan(1, 4);
