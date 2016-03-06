@@ -72,3 +72,6 @@ add_executable(generate_ods ${GUI_TYPE} app/main.cpp)
 target_link_libraries(generate_ods 
 						GestionNote)
 
+add_executable(test ${GUI_TYPE} app/sample.cpp)
+target_link_libraries(test 
+						GestionNote)
