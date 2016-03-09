@@ -7,7 +7,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 # Instruct CMake to run moc automatically when needed.
 set(CMAKE_AUTOMOC ON)
 
-link_directories(${QOds_BINARY_DIR}/lib)
+link_directories(${GestionNote_BINARY_DIR}/lib)
 
 #project(zlib C)
 

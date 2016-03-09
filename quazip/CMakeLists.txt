@@ -9,12 +9,12 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 # Instruct CMake to run moc automatically when needed.
 set(CMAKE_AUTOMOC ON)
 
-message("QOds_SOURCE_DIR = " ${QOds_SOURCE_DIR})
+message("GestionNote_SOURCE_DIR = " ${GestionNote_SOURCE_DIR})
 
-include_directories(${QOds_SOURCE_DIR})
-include_directories(${QOds_SOURCE_DIR}/zlib)
-link_directories(${QOds_BINARY_DIR})
-link_directories(${QOds_BINARY_DIR}/lib)
+include_directories(${GestionNote_SOURCE_DIR})
+include_directories(${GestionNote_SOURCE_DIR}/zlib)
+link_directories(${GestionNote_BINARY_DIR})
+link_directories(${GestionNote_BINARY_DIR}/lib)
 
 
 find_package(Qt5Core REQUIRED)

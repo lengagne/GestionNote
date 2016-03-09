@@ -9,8 +9,8 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 # Instruct CMake to run moc automatically when needed.
 set(CMAKE_AUTOMOC ON)
 
-include_directories(${QOds_SOURCE_DIR})
-link_directories(${QOds_BINARY_DIR}/lib)
+include_directories(${GestionNote_SOURCE_DIR})
+link_directories(${GestionNote_BINARY_DIR}/lib)
 
 if (NOT MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
@@ -42,4 +42,4 @@ target_link_libraries(ods quazip Qt5::Core Qt5::Gui)
 
 
 
- 
+

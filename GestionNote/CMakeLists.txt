@@ -5,7 +5,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 # Instruct CMake to run moc automatically when needed.
 set(CMAKE_AUTOMOC ON)
 
-include_directories(${QOds_SOURCE_DIR})
+include_directories(${GestionNote_SOURCE_DIR})
 link_directories(${CMAKE_BINARY_DIR}/lib)
 
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin )
@@ -44,7 +44,7 @@ file(	GLOB_RECURSE
 )
 
 file(	GLOB_RECURSE
-	header_mogs_core
+	header_files
 	include/*.h
 	include/*.hxx
 )
@@ -52,26 +52,43 @@ file(	GLOB_RECURSE
 include_directories(	include
 						${QT_USE_FILE}
 						${Qt5Core_INCLUDE_DIRS})
-						
+
 ADD_DEFINITIONS(${QT_DEFINITIONS})
-						
+
 foreach(f IN LISTS src_files)
 	get_filename_component(b ${f} NAME)
 	set_source_files_properties(${f} PROPERTIES
 		COMPILE_DEFINITIONS "SRC_FILE_NAME=\"${b}\"")
 endforeach()
 
-ADD_LIBRARY(	GestionNote SHARED 
-		${src_files}
-)
-# 
-target_link_libraries(GestionNote ods quazip zlib Qt5::Core Qt5::Gui Qt5::Xml)
+ADD_LIBRARY(	NoteGestion SHARED
+                ${src_files})
+target_link_libraries(NoteGestion ods quazip zlib Qt5::Core Qt5::Gui Qt5::Xml)
 
 
-add_executable(generate_ods ${GUI_TYPE} app/main.cpp)
-target_link_libraries(generate_ods 
-						GestionNote)
+add_executable(	GestionNoteCompletion
+                "${CMAKE_CURRENT_SOURCE_DIR}/app/GestionNoteCompletion.cpp")
+
+target_link_libraries(	GestionNoteCompletion
+                        NoteGestion	)
+
+add_executable(GestionNote ${GUI_TYPE} app/main.cpp)
+target_link_libraries(  GestionNote
+						NoteGestion)
 
 add_executable(test ${GUI_TYPE} app/sample.cpp)
-target_link_libraries(test 
-						GestionNote)
+target_link_libraries(  test
+						NoteGestion)
+
+### installation of the files
+SET(INSTALL_INCLUDE_DIRS ${CMAKE_INSTALL_INCLUDEDIR}/include/GestionNote)
+SET(INSTALL_LIB_DIRS ${CMAKE_INSTALL_LIBDIR}/lib )
+
+install( FILES ${header_files} DESTINATION ${INSTALL_INCLUDE_DIRS})
+install( FILES "tools/GestionNoteCompletion.sh" DESTINATION /etc/bash_completion.d/)
+
+install( TARGETS GestionNoteCompletion GestionNote  LIBRARY RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin  COMPONENT main)
+install( TARGETS NoteGestion LIBRARY DESTINATION ${INSTALL_LIB_DIRS}  COMPONENT main)
+
+
+

@@ -1,9 +1,9 @@
 #cmake -G "MinGW Makefiles"
 message(STATUS "${CMAKE_CURRENT_LIST_FILE}")
 cmake_minimum_required(VERSION 2.8.12)
-Project(QOds)
+Project(GestionNote)
 
-set(LIBRARY_OUTPUT_PATH "${QOds_BINARY_DIR}/lib")
+set(LIBRARY_OUTPUT_PATH "${GestionNote_BINARY_DIR}/lib")
 
 message(STATUS ${CMAKE_SYSTEM}) # print OS name
 
