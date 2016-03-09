@@ -14,6 +14,9 @@ if (BUILD_STATIC_LIBRARIES)
 	set(ZLIB_STATIC "1")
 endif (BUILD_STATIC_LIBRARIES)
 
+SET(INSTALL_INCLUDE_DIRS ${CMAKE_INSTALL_INCLUDEDIR}/include/GestionNote)
+SET(INSTALL_LIB_DIRS ${CMAKE_INSTALL_LIBDIR}/lib )
+
 add_subdirectory(zlib)
 add_subdirectory(quazip)
 add_subdirectory(ods)

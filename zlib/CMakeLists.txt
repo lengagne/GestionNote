@@ -172,8 +172,9 @@ else (DEFINED ZLIB_STATIC)
 	set(lib_type SHARED)
 endif (DEFINED ZLIB_STATIC)
 
-add_library(zlib ${lib_type} ${ZLIB_SRCS} ${ZLIB_ASMS} ${ZLIB_DLL_SRCS}
+add_library(zlib SHARED ${lib_type} ${ZLIB_SRCS} ${ZLIB_ASMS} ${ZLIB_DLL_SRCS}
 	 ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
 set_target_properties(zlib PROPERTIES DEFINE_SYMBOL ZLIB_DLL)
 set_target_properties(zlib PROPERTIES SOVERSION 1)
 
+install( TARGETS zlib LIBRARY DESTINATION ${INSTALL_LIB_DIRS}  COMPONENT main)

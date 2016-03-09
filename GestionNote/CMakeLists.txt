@@ -81,14 +81,12 @@ target_link_libraries(  test
 						NoteGestion)
 
 ### installation of the files
-SET(INSTALL_INCLUDE_DIRS ${CMAKE_INSTALL_INCLUDEDIR}/include/GestionNote)
-SET(INSTALL_LIB_DIRS ${CMAKE_INSTALL_LIBDIR}/lib )
+
 
 install( FILES ${header_files} DESTINATION ${INSTALL_INCLUDE_DIRS})
-install( FILES "tools/GestionNoteCompletion.sh" DESTINATION /etc/bash_completion.d/)
+install( FILES "app/GestionNoteCompletion.sh" DESTINATION /etc/bash_completion.d/)
 
 install( TARGETS GestionNoteCompletion GestionNote  LIBRARY RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin  COMPONENT main)
 install( TARGETS NoteGestion LIBRARY DESTINATION ${INSTALL_LIB_DIRS}  COMPONENT main)
-
 
 

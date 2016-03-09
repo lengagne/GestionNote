@@ -37,9 +37,7 @@ else (DEFINED ODS_STATIC)
 	add_definitions(-DODS_SHARED -DODS_BUILDING)
 endif (DEFINED ODS_STATIC)
 
-add_library(ods ${lib_type} ${lib_files})
+add_library(ods SHARED ${lib_type} ${lib_files})
 target_link_libraries(ods quazip Qt5::Core Qt5::Gui)
 
-
-
-
+install( TARGETS ods LIBRARY DESTINATION ${INSTALL_LIB_DIRS}  COMPONENT main)

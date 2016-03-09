@@ -37,6 +37,8 @@ else (DEFINED QUAZIP_STATIC)
 	add_definitions(-DQUAZIP_SHARED -DQUAZIP_BUILD)
 endif (DEFINED QUAZIP_STATIC)
 
-add_library(quazip ${lib_type} ${src_files})
+add_library(quazip SHARED ${lib_type} ${src_files})
 #set_target_properties(quazip PROPERTIES VERSION 1.0.0 SOVERSION 1)
 target_link_libraries(quazip Qt5::Core zlib)
+
+install( TARGETS quazip LIBRARY DESTINATION ${INSTALL_LIB_DIRS}  COMPONENT main)

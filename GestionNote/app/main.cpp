@@ -33,30 +33,51 @@
 void print_help()
 {
 	std::cout<<"aide"<<std::endl;
-	std::cout<<"générer fichier note :    executable create_files liste_etudiants.ods liste_enseignements.xml"<<std::endl;
-	std::cout<<"générer fichier note :    executable import liste_enseignements.xml main.ods responsable.ods"<<std::endl;
-	
+	std::cout<<"générer fichier note :    GestionNote create_files liste_etudiants.ods liste_enseignements.xml"<<std::endl;
+	std::cout<<"générer fichier note :    GestionNote import liste_enseignements.xml main.ods responsable.ods"<<std::endl;
+	std::cout<<"afficher arborescence cours :    GestionNote show_tree_lesson *.xml "<<std::endl;
+
 }
 
 int main(int argc, char *argv[])
 {
 	QCoreApplication app(argc, argv);
-	
-	qDebug().nospace() << "QOds version: " << ods::version_major() << "." << ods::version_minor() << "." << ods::version_micro();
-	
+
+//	qDebug().nospace() << "QOds version: " << ods::version_major() << "." << ods::version_minor() << "." << ods::version_micro();
+
 	std::cout<<"il y a "<< argc <<" paramètres" <<std::endl;
-		
-	if (argc==4)
+
+	if (argc == 3)
+    {
+        QString command(argv[1]);
+        if (command =="show_tree_lesson")
+        {
+            std::cout<<" youhouhou"<<std::endl;
+            QString file(argv[2]);
+            structure_cours cours;
+            cours.read_xml(file);
+            cours.print_tree();
+
+            return 1;
+        }else if (command =="show_students")
+        {
+            QString file(argv[2]);
+            structure_cours cours;
+            cours.read_student(file);
+            cours.print_students();
+            return 1;
+        }
+    }else if (argc==4)
 	{
 		QString command(argv[1]);
 		if (command == "create_files")
 		{
-			
+
 			QString ods(argv[2]);
 			QString xml(argv[3]);
 			app::sample toto;
-			
-			
+
+
 			structure_cours cours;
 			cours.read_xml(xml);
 			cours.read_student(ods);
@@ -66,8 +87,8 @@ int main(int argc, char *argv[])
 		}
 	}
 	print_help();
-	
-	
+
+
 	return 0;
 }
 
