@@ -23,6 +23,8 @@ public:
     std::vector<QString> dep_matiere_name_;
     unsigned int tree_level_;
     bool must_validate_;
+
+    ods::Sheet* sheet_;
 };
 
 

@@ -2,6 +2,7 @@
 #define START_LINE 5
 #define START_COL 5
 
+#define PROJECT_NAME "GestionNoteProject.xml"
 
 structure_cours::structure_cours()
 {
@@ -14,11 +15,60 @@ structure_cours::~structure_cours()
 	std::cout<<"Destruction de l'objet strucutre cours"<<std::endl;
 }
 
-void structure_cours::create_file()
+void structure_cours::create_project( const QString & cours_xml,
+                                    const QString& student_ods,
+                                    const QString& output)
 {
-/*	auto *style_center = book_master_.CreateCellStyle();
+    std::cout<<" Creating project"<<std::endl;
+    if (read_project())
+    {
+        std::cerr<<"Error the project already exists you cannot create  a new one here"<<std::endl;
+        exit(0);
+    }
+
+    std::cout<<" Actually create project"<<std::endl;
+	QDomDocument document;
+	QFile file(PROJECT_NAME);
+
+	if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
+	{
+		qDebug() << "Failed to open the file for writing.";
+		qDebug() << "You must create a project please refer to : GestionNote help";
+		exit(0);
+	}
+
+	QXmlStreamWriter xmlWriter(&file);
+	xmlWriter.setAutoFormatting(true);
+	xmlWriter.writeStartDocument();
+
+	xmlWriter.writeStartElement("GestionNoteProject");
+
+	xmlWriter.writeTextElement("cours", cours_xml );
+	xmlWriter.writeTextElement("students", student_ods);
+	xmlWriter.writeTextElement("output", output);
+
+	xmlWriter.writeEndElement();
+    file.close();
+
+    cours_xml_ = cours_xml;
+	student_ods_ = student_ods;
+	output_ = output;
+
+	read_student(student_ods_);
+	read_xml(cours_xml);
+
+    create_files();
+}
+
+void structure_cours::create_files()
+{
+	auto *style_center = book_master_.CreateCellStyle();
 	style_center->SetHAlignment(ods::HAlign::Center);
 
+    create_main_sheet(  );
+    create_sub_sheet( tree_matiere_ );
+
+/*
 	int max_level = get_biggest_level();
 // 	std::cout<<"max_level = "<< max_level <<std::endl;
 	for (int i=0;i<max_level+1;i++)
@@ -134,15 +184,15 @@ void structure_cours::create_file()
 		}
 	}
 
-
-	auto path = "./master.ods";
+*/
+	auto path = output_ + ".ods";
 	QFile target(path);
 	QString err = book_master_.Save(target);
 	if (!err.isEmpty())
 		qDebug() << "Error saving ods file:" << err;
 	else
 		qDebug() << "Saved to" << target.fileName();
-*/
+
 /*	// create prof files
 	for (int i=0;i<liste_prof.size();i++)
 	{
@@ -160,6 +210,182 @@ void structure_cours::create_file()
 			qDebug() << "Saved to" << target.fileName();
 	}
 */
+}
+
+void structure_cours::create_main_sheet(  )
+{
+    main_sheet_ = book_master_.CreateSheet(output_);
+
+    /*/ writing columns*/
+}
+
+void structure_cours::create_sub_sheet( matiere * m )
+{
+    std::cout<<" Creating sheet for "<< m->alias_.toStdString()<<std::endl;
+    auto *style_center = book_master_.CreateCellStyle();
+    style_center->SetHAlignment(ods::HAlign::Center);
+
+    m->sheet_ = book_master_.CreateSheet(m->alias_);
+    // create the sheet of the child
+    for (int i=0;i< m->dep_matiere_.size();i++)
+    {
+        create_sub_sheet(m->dep_matiere_[i]);
+    }
+
+    // write info on the head of the page
+    int start = 0;
+    // set name
+    auto  *row = m->sheet_->CreateRow(start++);
+    auto *cell = row->CreateCell(0);
+    cell->SetValue("Matiere : ");
+    cell = row->CreateCell(1);
+    cell->SetValue( m->name_);
+
+    // set alias :
+    row = m->sheet_->CreateRow(start++);
+    cell = row->CreateCell(0);
+    cell->SetValue("Alias : ");
+    cell = row->CreateCell(1);
+    cell->SetValue( m->alias_);
+
+    // set professor :
+    row = m->sheet_->CreateRow(start++);
+    cell = row->CreateCell(0);
+    cell->SetValue("Responsable : ");
+    cell = row->CreateCell(1);
+    cell->SetValue( m->referent_);
+
+    // set option :
+    row = m->sheet_->CreateRow(start++);
+    cell = row->CreateCell(0);
+    cell->SetValue("Option : ");
+    cell = row->CreateCell(1);
+    cell->SetValue( m->option_);
+
+    // set apogee :
+    row = m->sheet_->CreateRow(start++);
+    cell = row->CreateCell(0);
+    cell->SetValue("Apogee : ");
+    cell = row->CreateCell(1);
+    cell->SetValue( m->apogee_);
+
+    row = m->sheet_->CreateRow(start++);
+    row = m->sheet_->CreateRow(start++);
+    // set the dependancy
+    cell = row->CreateCell(3);
+    cell->SetValue(m->alias_);
+    cell->SetStyle(style_center);
+
+    for (int k=0;k<m->dep_matiere_.size();k++)
+    {
+        cell = row->CreateCell(4+k);
+        cell->SetValue(m->dep_matiere_[k]->alias_);
+        cell->SetStyle(style_center);
+    }
+
+
+    row = m->sheet_->CreateRow(start++);
+    auto *row_coeff = row;
+    cell = row->CreateCell(0);
+    cell->SetValue("Nom ");
+    cell = row->CreateCell(1);
+    cell->SetValue("Prenom ");
+    cell = row->CreateCell(2);
+    cell->SetValue("Option ");
+    cell->SetStyle(style_center);
+
+     for (int k=0;k<m->dep_matiere_.size();k++)
+    {
+        cell = row->CreateCell(4+k);
+        cell->SetValue(m->coeff_[k]);
+        cell->SetStyle(style_center);
+    }
+
+    for (int i=0;i<liste_etudiant.size();i++)
+    {
+        student& e = liste_etudiant[i];
+        qDebug()<<"Working on student "<< e.name_;
+        if (m->option_ == "all" || m->option_ == e.option_ )
+        {
+            row = m->sheet_->CreateRow(start++);
+            cell = row->CreateCell(0);
+            cell->SetValue(e.name_);
+            cell = row->CreateCell(1);
+            cell->SetValue(e.first_name_);
+            cell = row->CreateCell(2);
+            cell->SetValue(e.option_);
+            cell->SetStyle(style_center);
+
+            cell = row->CreateCell(3);
+            std::cout<<"matiere = "<< m->name_.toStdString()<<" nombre de dépendance = "<< m->dep_matiere_.size()<<std::endl;
+            if (m->dep_matiere_.size()>0)
+            {
+                std::cout<<"in the loop"<<std::endl;
+                // mise en place de l'équation
+                auto *formula = new ods::Formula();
+                formula->Add(ods::Grouping::Open);
+                for (int k=0;k<m->dep_matiere_.size();k++)
+                    if (m->dep_matiere_[k]->option_ == "all" || m->dep_matiere_[k]->option_ == e.option_ )
+                    {
+                        ods::Cell* cell_coeff = row_coeff->cell(4+k);
+                        ods::Cell* cell_value = row->CreateCell(4+k);
+                        formula->Add(cell_coeff);
+                        formula->Add(ods::Op::Mult);
+                        formula->Add(cell_value);
+
+                        if (k!=m->dep_matiere_.size()-1)
+                            formula->Add(ods::Op::Add);
+                    }else
+                    {
+                        row->CreateCell(4+k);
+                    }
+                formula->Add(ods::Grouping::Close);
+                formula->Add(ods::Op::Divide);
+                formula->Add(ods::Grouping::Open);
+                for (int k=0;k<m->dep_matiere_.size();k++)   if (m->dep_matiere_[k]->option_ == "all" || m->dep_matiere_[k]->option_ == e.option_ )
+                {
+                    ods::Cell* cell_coeff = row_coeff->cell(4+k);
+                    formula->Add(cell_coeff);
+                    if (k!=m->dep_matiere_.size()-1)
+                        formula->Add(ods::Op::Add);
+                }
+                formula->Add(ods::Grouping::Close);
+                cell->SetFormula(formula);
+                cell->SetStyle(style_center);
+
+                // copie des feuilles précédentes
+                for (int k=0;k<m->dep_matiere_.size();k++)
+                {
+                    cell = row->cell(4+k);
+                    cell->SetStyle(style_center);
+
+                    if (m->dep_matiere_[k]->option_ == "all" || m->dep_matiere_[k]->option_ == e.option_ )
+                    {
+                        if (e.get_dep(m->dep_matiere_[k]->alias_))
+                        {
+                            place p = e.get_dep_cell( m->dep_matiere_[k]->alias_);
+                            auto* sheet_dep = book_master_.sheet(m->dep_matiere_[k]->alias_);
+                            auto *row_dep = sheet_dep->row(p.row);
+                            auto *cell_dep = row_dep->cell(p.col);
+                            auto *formula1 = new ods::Formula();
+                            formula1->Add(sheet_dep, cell_dep );
+                            cell->SetFormula(formula1);
+                            cell->SetValue(m->dep_matiere_[k]->alias_);
+                        }
+                    }
+                }
+            }
+
+            qDebug()<<" matiere = "<< m->alias_<<"  student = "<< e.name_;
+            // save value of current sheet;
+            place p;
+            p.col = 3;
+            p.row = start-1;
+            e.set_cell( p , m->sheet_, m->alias_);
+
+
+        }
+    }
 }
 
 /*cours* structure_cours::get_cours(QString alias)
@@ -307,6 +533,90 @@ void structure_cours::print_tree()
     }
 }
 
+bool structure_cours::read_project()
+{
+	QDomDocument document;
+	QFile file(PROJECT_NAME);
+
+	if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
+	{
+		// qDebug() << "Failed to open the file for reading.";
+		// qDebug() << "You must create a project please refer to : GestionNote help";
+		return false;
+	}
+	else
+	{	// loading
+		if(!document.setContent(&file))
+		{
+			// qDebug() << "Failed to load the file for reading.";
+			return false;
+		}
+		file.close();
+	}
+	QDomElement root = document.firstChildElement();
+
+//	QDomElement nodes = root.elementsByTagName("project");
+/*// 	qDebug() << "# nodes = " << nodes.count();
+	for(int i = 0; i < nodes.count(); i++)
+	{
+		QDomNode elm = nodes.at(i);
+		if(elm.isElement())
+		{
+			matiere new_cours;
+			new_cours.referent_ = "none";
+			// lecture du nom
+			QDomElement name = elm.namedItem("nom").toElement();
+			if ( !name.isNull() ) { // We have a <name>..</name> element in the set
+				new_cours.name_ = name.text().trimmed();
+			}else
+			{
+				std::cerr<<"nom not found "<<std::endl;
+				exit(0);
+			}
+// 			qDebug() << new_cours.nom;
+
+			QDomElement alias = elm.namedItem("alias").toElement();
+			if ( !alias.isNull() ) { // We have a <name>..</name> element in the set
+				new_cours.alias_ = alias.text().trimmed();
+			}
+
+			// lecture des dépendances
+			QDomElement e = elm.firstChildElement( "dependance" );
+			while ( !e.isNull() ) {
+				new_cours.dep_matiere_name_.push_back(e.text().trimmed());
+				new_cours.coeff_.push_back(e.attribute("coeff").toDouble());
+// 				qDebug() <<"coeff = "<< e.attribute("coeff");
+// 				qDebug() <<"dependance = "<< e.text().trimmed();
+				e = e.nextSiblingElement( "dependance" );
+			}
+
+			QDomElement responsable = elm.namedItem("responsable").toElement();
+			if ( !responsable.isNull() ) { // We have a <name>..</name> element in the set
+				new_cours.referent_ = responsable.text().trimmed();
+// 				qDebug() <<"responsable = "<< responsable.text().trimmed();
+			}
+
+			QDomElement apogee = elm.namedItem("apogee").toElement();
+			if ( !apogee.isNull() ) { // We have a <name>..</name> element in the set
+				new_cours.apogee_ = apogee.text().trimmed();
+			}
+
+			QDomElement option = elm.namedItem("option").toElement();
+			if ( !option.isNull() ) { // We have a <name>..</name> element in the set
+				new_cours.option_ = option.text().trimmed();
+			}else
+				new_cours.option_ = "";
+
+			new_cours.tree_level_ = -1;
+//			new_cours.sheet =  nullptr;
+
+			liste_cours.push_back(new_cours);
+		}
+	}*/
+
+
+	return true;
+}
 
 void structure_cours::read_student(QString ods_file)
 {
@@ -334,8 +644,8 @@ void structure_cours::read_student(QString ods_file)
         exit(0);
     }
 
-    find_option = find_cell( &option_col, &option_row, "OPTION",ods_file);
-
+    find_option = find_cell( &option_col, &option_row, "OPTION",ods_file) || find_cell( &option_col, &option_row, "option",ods_file) || find_cell( &option_col, &option_row, "Option",ods_file);;
+    std::cout<<" find_option = "<< find_option <<std::endl;
 	QFile file(ods_file);
 	if (!file.exists())
 	{
@@ -382,8 +692,8 @@ void structure_cours::read_student(QString ods_file)
 			if (find_option)
             {
                 const ods::Value &value4 = cell_option->value();
-                if( value4.NoValue())
-                    tmp.options_ .push_back(*value4.AsString());
+                if( !value4.NoValue())
+                    tmp.option_ = *value4.AsString();
             }
 
 			qDebug()<<tmp.name_ << tmp.first_name_ << tmp.email_;
@@ -466,7 +776,7 @@ void structure_cours::read_xml( QString input)
 			if ( !option.isNull() ) { // We have a <name>..</name> element in the set
 				new_cours.option_ = option.text().trimmed();
 			}else
-				new_cours.option_ = "";
+				new_cours.option_ = "all";
 
 			new_cours.tree_level_ = -1;
 //			new_cours.sheet =  nullptr;

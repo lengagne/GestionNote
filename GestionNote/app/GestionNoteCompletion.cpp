@@ -31,17 +31,33 @@ int main(int argc, char* argv[])
 	}
 	if (argc == 2)
     {
-        std::cout<<"show_tree_lesson show_students"<<std::endl;
+        std::cout<<"help new show_tree_lesson show_students"<<std::endl;
     }else if (argc ==3)
     {
         QString command(argv[1]);
         if(command == "show_tree_lesson")
         {
             std::cout<<"file: xml"<<std::endl;
-        }
-        if(command == "show_students")
+        }else if(command == "show_students")
         {
             std::cout<<"file: ods"<<std::endl;
+        }else if(command == "new")
+        {
+            std::cout<<" file: xml"<<std::endl;
+        }
+    }else if (argc ==4)
+    {
+        QString command(argv[1]);
+        if(command == "new")
+        {
+            std::cout<<" file: ods"<<std::endl;
+        }
+    }else if (argc ==5)
+    {
+        QString command(argv[1]);
+        if(command == "new")
+        {
+            std::cout<<" output_files "<<std::endl;
         }
     }
     else
