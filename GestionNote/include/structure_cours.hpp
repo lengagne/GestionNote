@@ -34,9 +34,9 @@ public:
 
 	void read_xml( QString input);
 
-	private:
+private:
 
-
+    void add_main_sheet_line( matiere * tree, ods::Row * r, int level, ods::Cell* previous);
 
 	void create_files();
 
@@ -46,7 +46,7 @@ public:
 
 	bool find_cell(int * col, int * row, QString name, QString ods_file);
 
-	int get_biggest_level();
+	unsigned int get_biggest_level();
 
 
 

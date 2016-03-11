@@ -39,39 +39,39 @@ Invoice::CreateBillToHeader(const int kLastRow)
 {
 	int last_row_index = kLastRow + 1;
 	auto *row = sheet_->CreateRow(last_row_index);
-	
+
 	auto *cell = row->CreateCell(0);
 	auto *style = book_.CreateCellStyle();
 	style->SetBold(true);
 	cell->SetStyle(style);
 	cell->SetValue("Bill To:");
-	
+
 	const int col1 = 1;
 	const int col2 = 5;
-	
+
 	row->CreateCell(col1)->SetValue("C20423");
-	
+
 	cell = row->CreateCell(col2 - 1);
 	cell->SetValue("Ship To:");
 	cell->SetStyle(style);
 	row->CreateCell(col2)->SetValue("Ship name 1");
-	
+
 	row = sheet_->CreateRow(++last_row_index);
 	row->CreateCell(col1)->SetValue("ABC company");
 	row->CreateCell(col2)->SetValue("Ship Address 1");
-	
+
 	row = sheet_->CreateRow(++last_row_index);
 	row->CreateCell(col1)->SetValue("232 Brooklyn street");
 	row->CreateCell(col2)->SetValue("SH Address 1");
-	
+
 	row = sheet_->CreateRow(++last_row_index);
 	row->CreateCell(col1)->SetValue("New York");
 	row->CreateCell(col2)->SetValue("Whatever");
-	
+
 	row = sheet_->CreateRow(++last_row_index);
 	row->CreateCell(col1)->SetValue("USA");
 	row->CreateCell(col2)->SetValue("Canada");
-	
+
 	return last_row_index;
 }
 
@@ -79,27 +79,27 @@ int
 Invoice::CreateNotes(const int kLastRow)
 {
 	int last_row_index = kLastRow + 1;
-	
+
 	auto *bold_style = book_.CreateCellStyle();
 	bold_style->SetBold(true);
-	
+
 	auto *row = sheet_->CreateRow(last_row_index);
 	auto *cell = row->CreateCell(0);
 	cell->SetStyle(bold_style);
 	cell->SetValue("Notes:");
-	
+
 	auto *border = new ods::style::Border();
 	border->SetStyle(ods::BorderStyle::Dotted);
 	border->SetWidth(ods::BorderWidth::Thin);
-	
+
 	auto *style = book_.CreateCellStyle();
 	style->SetBorder(border);
-	
+
 	row = sheet_->CreateRow(++last_row_index);
 	cell = row->CreateCell(0);
 	cell->SetStyle(style);
 	cell->SetRowColSpan(6, 5);
-	
+
 	last_row_index += cell->num_rows_spanned();
 	last_row_index += 2;
 	row = sheet_->CreateRow(last_row_index);
@@ -114,7 +114,7 @@ Invoice::CreateNotes(const int kLastRow)
 	style->SetVAlignment(ods::VAlign::Middle);
 	style->SetItalic(true);
 	cell->SetStyle(style);
-	
+
 	return last_row_index;
 }
 
@@ -124,11 +124,11 @@ Invoice::CreateSellerHeader()
 	auto *row1 = sheet_->CreateRow(1);
 	auto *cell = row1->CreateCell(0);
 	const QString kName = "company-logo.png";
-	auto path = QDir(QDir::homePath()).filePath(kName); 
+	auto path = QDir(QDir::homePath()).filePath(kName);
 	QFile file(path);
 	if (!file.exists())
 	{
-		
+
 		qDebug() << "If there was" << kName <<
 			"in your home dir, I'd also display the \"company logo\".";
 	} else {
@@ -140,36 +140,39 @@ Invoice::CreateSellerHeader()
 		}
 		draw_frame->SetSize(QSize(60, 60));
 	}
-	
+
 	auto *style = book_.CreateCellStyle();
 	style->SetBold(true);
 	style->SetFontSize(18);
-	
+
 	const int kCompanyCol = 1;
 	const int kShipToCol = 5;
-	
+
 	cell = row1->CreateCell(kCompanyCol);
 	cell->SetValue("Your company name");
 	cell->SetRowColSpan(1, 4);
 	cell->SetStyle(style);
 	row1->SetOptimalHeightStyle();
-	
+
 	auto *row2 = sheet_->CreateRow(2);
-	row2->CreateCell(kCompanyCol)->SetValue("Street Address");
+	cell = row2->CreateCell(kCompanyCol);
+	cell->SetValue("Street Address");
+	cell->SetRowColSpan(1, 4);
+
 	cell = row2->CreateCell(kShipToCol);
 	cell->SetRowColSpan(1, 3);
 	auto date = QDate::currentDate();
 	cell->SetValue(QString("Date: ") + date.toString());
-	
+
 	auto *row = sheet_->CreateRow(3);
 	row->CreateCell(kCompanyCol)->SetValue("City, ST, ZIP code");
 	cell = row->CreateCell(kShipToCol);
 	cell->SetRowColSpan(1, 3);
 	cell->SetValue("INVOICE #: INVC4203");
-	
+
 	row = sheet_->CreateRow(4);
 	row->CreateCell(kCompanyCol)->SetValue("Phone number, Web address");
-	
+
 	row = sheet_->CreateRow(6);
 	auto *top_border = new ods::style::Border();
 	top_border->sides_set(ods::BorderSideTop);
@@ -177,7 +180,7 @@ Invoice::CreateSellerHeader()
 	top_border->SetWidth("5pt");
 	style = book_.CreateCellStyle();
 	style->SetBorder(top_border);
-	
+
 	for (int i = 0; i <= kShipToCol+2; i++)
 	{
 		cell = row->CreateCell(i);
@@ -190,7 +193,7 @@ int
 Invoice::CreateTable(QVector<app::Item*> *vec, const int kLastRow)
 {
 	int last_row_index = kLastRow + 1;
-	
+
 	auto *border = new ods::style::Border();
 	border->sides_set(ods::BorderSideLeft | ods::BorderSideRight);
 
@@ -209,42 +212,42 @@ Invoice::CreateTable(QVector<app::Item*> *vec, const int kLastRow)
 	const int c = 230;
 	dark_style->SetBackgroundColor(QColor(c, c, c));
 	QVector<ods::Cell*> line_total_cells;
-	
+
 	for(int i=0; i<vec->size(); i++, last_row_index++)
 	{
 		auto *item = vec->at(i);
-		
+
 		auto *style = (i % 2) ? dark_style : light_style;
 		auto *row = sheet_->CreateRow(last_row_index);
-		
+
 		auto *cell = row->CreateCell(0);
 		QString id_str = QString("IT0") + QString::number(item->id());
 		cell->SetValue(id_str);
 		cell->SetStyle(style);
-		
+
 		cell = row->CreateCell(cell->UpToColumn()+1);
 		cell->SetRowColSpan(1, 3);
 		cell->SetValue(item->description());
 		cell->SetStyle(style);
-		
+
 		auto *qtty_cell = row->CreateCell(cell->UpToColumn()+1);
 		qtty_cell->SetValue(item->qtty_ordered());
 		qtty_cell->SetStyle(style);
-		
+
 		auto *price_cell = row->CreateCell(qtty_cell->UpToColumn()+1);
 		price_cell->SetCurrencyValue(item->unit_price(), style);
 		//price_cell->SetStyle(style);
-		
+
 		// Next, one could compute the "line total" and insert the
 		// resulting number into "line total", but to make the
 		// invoice more fancy and to
 		// show off "real world" usage of formulas let's use formulas instead.
-		
+
 		auto *formula = new ods::Formula();
 		formula->Add(qtty_cell);
 		formula->Add(ods::Op::Mult);
 		formula->Add(price_cell);
-		
+
 		cell = row->CreateCell(price_cell->UpToColumn()+1);
 		cell->SetRowColSpan(1, 2);
 		// if the value of the cell should be a (normal) number and not a
@@ -255,31 +258,31 @@ Invoice::CreateTable(QVector<app::Item*> *vec, const int kLastRow)
 
 		line_total_cells.append(cell);
 	}
-	
+
 	auto *top_border = new ods::style::Border();
 	top_border->sides_set(ods::BorderSideTop);
 	auto *style = book_.CreateCellStyle();
 	style->SetBorder(top_border);
-	
+
 	auto *row = sheet_->CreateRow(last_row_index++);
-	
+
 	auto *cell = row->CreateCell(0);
 	cell->SetStyle(style);
-	
+
 	cell = row->CreateCell(cell->UpToColumn() + 1);
 	cell->SetRowColSpan(1, 3);
 	cell->SetStyle(style);
-	
+
 	cell = row->CreateCell(cell->UpToColumn() + 1);
 	cell->SetStyle(style);
-	
+
 	auto *unit_price_cell = row->CreateCell(cell->UpToColumn() + 1);
 	unit_price_cell->SetValue("TOTAL:");
 	auto *unit_style = style->Derive();
 	unit_style->SetHAlignment(ods::HAlign::Right);
 	unit_price_cell->SetStyle(unit_style);
-	
-	
+
+
 	auto *formula = new ods::Formula();
 	const auto kCount = line_total_cells.size();
 	for(int i = 0; i < kCount; i++)
@@ -288,16 +291,16 @@ Invoice::CreateTable(QVector<app::Item*> *vec, const int kLastRow)
 		if (i < kCount - 1)
 			formula->Add(ods::Op::Add);
 	}
-	
+
 	auto *total_cell = row->CreateCell(
 		unit_price_cell->UpToColumn() + 1);
 	total_cell->SetRowColSpan(1, 2);
-	
+
 	border = new ods::style::Border(); // all sides
 	auto *total_style = book_.CreateStyle(info);
 	total_style->SetBorder(border);
 	total_cell->SetFormula(formula, total_style);
-	
+
 	return last_row_index;
 }
 
@@ -306,7 +309,7 @@ Invoice::CreateTableHeader(const int kLastRow)
 {
 	int last_row_index = kLastRow + 2;
 	auto *row = sheet_->CreateRow(last_row_index);
-	
+
 	auto *style = book_.CreateCellStyle();
 	style->SetBold(true);
 	const int c = 220;
@@ -314,29 +317,29 @@ Invoice::CreateTableHeader(const int kLastRow)
 	style->SetHAlignment(ods::HAlign::Center);
 	auto *border = new ods::style::Border();
 	style->SetBorder(border);
-	
+
 	auto *cell = row->CreateCell(0);
 	cell->SetStyle(style);
 	cell->SetValue("ID");
-	
+
 	cell = row->CreateCell(cell->UpToColumn()+1);
 	cell->SetRowColSpan(1, 3);
 	cell->SetStyle(style);
 	cell->SetValue("Description");
-	
+
 	cell = row->CreateCell(cell->UpToColumn()+1);
 	cell->SetStyle(style);
 	cell->SetValue("Qtty");
-	
+
 	cell = row->CreateCell(cell->UpToColumn()+1);
 	cell->SetStyle(style);
 	cell->SetValue("Price");
-	
+
 	cell = row->CreateCell(cell->UpToColumn()+1);
 	cell->SetStyle(style);
 	cell->SetRowColSpan(1, 2);
 	cell->SetValue("Line Total");
-	
+
 	return last_row_index;
 }
 
@@ -385,14 +388,14 @@ Invoice::Init()
 		qDebug() << "CreateTable() failed";
 		return;
 	}
-	
+
 	last_index = CreateNotes(last_index);
 	if (last_index == -1)
 	{
 		qDebug() << "CreateNotes() failed";
 		return;
 	}
-	
+
 	auto path = "./InvoiceAA.ods";
 	QFile target(path);
 	QString err = book_.Save(target);

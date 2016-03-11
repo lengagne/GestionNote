@@ -15,6 +15,53 @@ structure_cours::~structure_cours()
 	std::cout<<"Destruction de l'objet strucutre cours"<<std::endl;
 }
 
+void structure_cours::add_main_sheet_line( matiere * tree, ods::Row * row, int level, ods::Cell* previous)
+{
+    qDebug()<<"La matiere "<< tree->alias_<<" a "<< tree->dads_.size()<<" parents";
+	auto *style = book_master_.CreateCellStyle();
+	style->SetBold(true);
+	style->SetHAlignment(ods::HAlign::Center);
+//	style->SetBackgroundColor(QColor(255,255,0,100));
+
+    auto *border = new ods::style::Border();
+	border->sides_set(ods::BorderSideTop | ods::BorderSideLeft | ods::BorderSideRight);
+	style->SetBorder(border);
+
+    std::cout<<  tree->alias_.toStdString() <<" cellule de début = "<< tree->col_debut_<<std::endl;
+    ods::Cell * cell;
+
+    if (tree->tree_level_ < level)
+    {
+        cell = row->CreateCell(tree->col_debut_);
+        std::cout<<tree->alias_.toStdString()<<"  une seule cellule "<< tree->col_debut_ <<std::endl;
+        cell->SetValue( tree->alias_);
+        cell->SetStyle(style);
+    }else if (tree->tree_level_ == level)
+    {
+        cell = row->CreateCell(tree->col_debut_);
+        std::cout<<tree->alias_.toStdString()<<"  plusieurs cellules "<< tree->get_nb_dep() <<std::endl;
+        //if (tree->alias_ == "MIE")
+//            cell->SetRowColSpan(1, 2);
+        if (tree->col_fin_ - tree->col_debut_ > 0)
+        {
+            std::cout<<"We expand cell for "<< tree->alias_.toStdString()<<std::endl;
+            cell->SetRowColSpan(1, tree->col_fin_ - tree->col_debut_+1);
+        }
+
+        //cell->SetRowColSpan(1, 2);
+        cell->SetValue( tree->alias_);
+        cell->SetStyle(style);
+    }
+
+    for (int i=0;i<tree->dep_matiere_.size();i++)
+    {
+        if ( tree->dep_matiere_[i]->dads_.size()>0 && tree->dep_matiere_[i]->dads_[0]->alias_ == tree->alias_)
+            add_main_sheet_line(tree->dep_matiere_[i],row,level,cell);
+    }
+    std::cout<<  tree->alias_.toStdString() <<" cellule de fin = "<< tree->col_fin_<<std::endl;
+
+}
+
 void structure_cours::create_project( const QString & cours_xml,
                                     const QString& student_ods,
                                     const QString& output)
@@ -65,9 +112,9 @@ void structure_cours::create_files()
 	auto *style_center = book_master_.CreateCellStyle();
 	style_center->SetHAlignment(ods::HAlign::Center);
 
-    create_main_sheet(  );
+    main_sheet_ = book_master_.CreateSheet(output_);
     create_sub_sheet( tree_matiere_ );
-
+    create_main_sheet(  );
 /*
 	int max_level = get_biggest_level();
 // 	std::cout<<"max_level = "<< max_level <<std::endl;
@@ -214,9 +261,30 @@ void structure_cours::create_files()
 
 void structure_cours::create_main_sheet(  )
 {
-    main_sheet_ = book_master_.CreateSheet(output_);
-
     /*/ writing columns*/
+    int start = 0;
+	auto *style = book_master_.CreateCellStyle();
+	style->SetBold(true);
+	style->SetHAlignment(ods::HAlign::Center);
+	style->SetBackgroundColor(QColor(255,255,0,100));
+	//style->SetBorder(ods::BorderSideAll);
+
+    auto *border = new ods::style::Border();
+	border->sides_set(ods::BorderSideTop | ods::BorderSideLeft | ods::BorderSideRight);
+	style->SetBorder(border);
+//	style->SetFontSize(18);
+
+    unsigned int nbm = get_biggest_level();
+    std::cout<<"nbm = "<< nbm <<std::endl;
+    for (int i=0;i<nbm+1;i++)
+    {
+        auto *row = main_sheet_->CreateRow(start++);
+        auto* cell = row->CreateCell(2);
+        add_main_sheet_line( tree_matiere_, row, i,cell);
+    }
+
+
+
 }
 
 void structure_cours::create_sub_sheet( matiere * m )
@@ -304,7 +372,7 @@ void structure_cours::create_sub_sheet( matiere * m )
     for (int i=0;i<liste_etudiant.size();i++)
     {
         student& e = liste_etudiant[i];
-        qDebug()<<"Working on student "<< e.name_;
+        //qDebug()<<"Working on student "<< e.name_;
         if (m->option_ == "all" || m->option_ == e.option_ )
         {
             row = m->sheet_->CreateRow(start++);
@@ -317,24 +385,24 @@ void structure_cours::create_sub_sheet( matiere * m )
             cell->SetStyle(style_center);
 
             cell = row->CreateCell(3);
-            std::cout<<"matiere = "<< m->name_.toStdString()<<" nombre de dépendance = "<< m->dep_matiere_.size()<<std::endl;
+            //std::cout<<"matiere = "<< m->name_.toStdString()<<" nombre de dépendance = "<< m->dep_matiere_.size()<<std::endl;
             if (m->dep_matiere_.size()>0)
             {
-                std::cout<<"in the loop"<<std::endl;
+                //std::cout<<"in the loop"<<std::endl;
                 // mise en place de l'équation
                 auto *formula = new ods::Formula();
                 formula->Add(ods::Grouping::Open);
                 for (int k=0;k<m->dep_matiere_.size();k++)
                     if (m->dep_matiere_[k]->option_ == "all" || m->dep_matiere_[k]->option_ == e.option_ )
                     {
+                        if (k!=0)
+                            formula->Add(ods::Op::Add);
+
                         ods::Cell* cell_coeff = row_coeff->cell(4+k);
                         ods::Cell* cell_value = row->CreateCell(4+k);
                         formula->Add(cell_coeff);
                         formula->Add(ods::Op::Mult);
                         formula->Add(cell_value);
-
-                        if (k!=m->dep_matiere_.size()-1)
-                            formula->Add(ods::Op::Add);
                     }else
                     {
                         row->CreateCell(4+k);
@@ -344,10 +412,12 @@ void structure_cours::create_sub_sheet( matiere * m )
                 formula->Add(ods::Grouping::Open);
                 for (int k=0;k<m->dep_matiere_.size();k++)   if (m->dep_matiere_[k]->option_ == "all" || m->dep_matiere_[k]->option_ == e.option_ )
                 {
+                    if (k!=0)
+                        formula->Add(ods::Op::Add);
+
                     ods::Cell* cell_coeff = row_coeff->cell(4+k);
                     formula->Add(cell_coeff);
-                    if (k!=m->dep_matiere_.size()-1)
-                        formula->Add(ods::Op::Add);
+
                 }
                 formula->Add(ods::Grouping::Close);
                 cell->SetFormula(formula);
@@ -376,7 +446,7 @@ void structure_cours::create_sub_sheet( matiere * m )
                 }
             }
 
-            qDebug()<<" matiere = "<< m->alias_<<"  student = "<< e.name_;
+            //qDebug()<<" matiere = "<< m->alias_<<"  student = "<< e.name_;
             // save value of current sheet;
             place p;
             p.col = 3;
@@ -450,14 +520,20 @@ bool  structure_cours::find_cell(int * COL, int * ROW, QString name,QString ods_
 	return false;
 }
 
-int structure_cours::get_biggest_level()
+unsigned int structure_cours::get_biggest_level()
 {
-	int max = -1;
+	unsigned int max = 0;
 	for (int i=0;i<liste_cours.size();i++)
-		if (liste_cours[i].tree_level_>max)
+    {
+        //std::cout<<"liste_cours["<<i<<"].tree_level_ = "<< liste_cours[i].tree_level_ <<std::endl;
+        //std::cout<<" max = "<<max <<std::endl;
+		if (liste_cours[i].tree_level_ > max)
 		{
+		    //std::cout<<"modif max = "<<max <<std::endl;
 			max = liste_cours[i].tree_level_;
 		}
+	}
+	//std::cout<<" max = "<<max <<std::endl;
 	return max;
 }
 
@@ -512,6 +588,7 @@ matiere* structure_cours::get_master_of_tree()
         std::cerr<<" No root found in the xml" <<std::endl;
         exit(0);
     }
+
     return &liste_cours[id];
 }
 
@@ -645,7 +722,7 @@ void structure_cours::read_student(QString ods_file)
     }
 
     find_option = find_cell( &option_col, &option_row, "OPTION",ods_file) || find_cell( &option_col, &option_row, "option",ods_file) || find_cell( &option_col, &option_row, "Option",ods_file);;
-    std::cout<<" find_option = "<< find_option <<std::endl;
+    //std::cout<<" find_option = "<< find_option <<std::endl;
 	QFile file(ods_file);
 	if (!file.exists())
 	{
@@ -712,14 +789,14 @@ void structure_cours::read_xml( QString input)
 
 	if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
 	{
-		qDebug() << "Failed to open the file for reading.";
+		qDebug() << "Failed to open the file : "<< input<<" for reading.";
 		return;
 	}
 	else
 	{	// loading
 		if(!document.setContent(&file))
 		{
-			qDebug() << "Failed to load the file for reading.";
+			qDebug() << "Failed to load the file : "<< input <<" for reading.";
 			return;
 		}
 		file.close();
@@ -785,5 +862,9 @@ void structure_cours::read_xml( QString input)
 		}
 	}
 	tree_matiere_ = get_master_of_tree();
+	tree_matiere_->update_dads();
+	tree_matiere_->update_level();
+	tree_matiere_->update_col(3);
+
 }
 

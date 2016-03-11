@@ -83,10 +83,10 @@ Row::CreateCell(const qint32 at_column)
 		mtl_warn("at_column < 0");
 		return nullptr;
 	}
-	
+
 	if (at_column == 0)
 		return InsertCell(0, false);
-	
+
 	auto *prev_cell = GetPrevCell(at_column);
 	// stage: Null
 	if (prev_cell == nullptr)
@@ -95,7 +95,7 @@ Row::CreateCell(const qint32 at_column)
 		InsertEmptyCell(0, at_column, false);
 		return InsertCell(at_column);
 	}
-	
+
 	// stage: Next to it
 	const qint32 kPrevCellUpToCol = prev_cell->col_start();
 
@@ -103,7 +103,7 @@ Row::CreateCell(const qint32 at_column)
 	{
 		return InsertCell(at_column);
 	}
-	
+
 	// stage: A gap between them
 	if (prev_cell->IsEmpty2())
 	{
@@ -153,7 +153,7 @@ Row::Init()
 	}
 	column_count_ = 0;
 	auto &subnodes = tag_->subnodes();
-	
+
 	foreach (auto *node, subnodes)
 	{
 		if (!node->IsTag() || !node->Tag()->IsAnyCell())
@@ -289,10 +289,10 @@ Row::SetOptimalHeightStyle()
 		if (d > max_size)
 			max_size = d;
 	}
-	
+
 	if (max_size <= 0.0001)
 		return;
-	
+
 	opt_row_height_style_->SetOptimalRowHeight(max_size * 1.2,
 		ods::FontSizeType::In);
 	SetStyle(opt_row_height_style_);

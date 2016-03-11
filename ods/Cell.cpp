@@ -130,7 +130,7 @@ Cell::Init()
 	auto *attrs = tag_->attrs();
 	if (attrs == nullptr)
 		return;
-	
+
 	auto &ns = tag_->ns();
 	auto &subnodes = tag_->subnodes();
 	bool is_string_type = false;
@@ -139,7 +139,7 @@ Cell::Init()
 		if (!node->IsTag())
 			continue;
 		auto *tag = node->Tag();
-		
+
 		auto *type_attr = attrs->Get(ns.office(), ods::ns::kValueType);
 		if (type_attr != nullptr)
 		{
@@ -158,7 +158,7 @@ Cell::Init()
 		}
 		break;
 	}
-	
+
 	auto *attr = attrs->Get(ns.sheet(), ods::ns::kNumColsSpanned);
 	if (attr != nullptr)
 		attr->ToUint16(num_cols_spanned_);
@@ -333,7 +333,7 @@ Cell::SetRowColSpan(const quint16 num_rows, const quint16 num_cols)
 	tag_->AttrSet(tag_->ns().sheet(), ods::ns::kNumRowsSpanned,
 		QString::number(num_rows));
 	num_rows_spanned_ = num_rows;
-	
+
 	tag_->AttrSet(tag_->ns().sheet(), ods::ns::kNumColsSpanned,
 		QString::number(num_cols));
 	num_cols_spanned_ = num_cols;

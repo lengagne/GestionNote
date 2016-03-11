@@ -44,7 +44,7 @@ void student::set_cell( const place& p ,
                         ods::Sheet * s,
                         QString name)
 {
-    std::cout<<" l'etudiant "<< name_.toStdString()<<" recoit ca note de "<< name.toStdString()<< " sheet = "<< s <<" place = "<< p.col<<" "<<p.row<<std::endl;
+    //std::cout<<" l'etudiant "<< name_.toStdString()<<" recoit sa note de "<< name.toStdString()<< " sheet = "<< s <<" place = "<< p.col<<" "<<p.row<<std::endl;
     note tmp;
     tmp.name = name;
     tmp.sheet = s;
