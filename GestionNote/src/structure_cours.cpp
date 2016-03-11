@@ -213,18 +213,27 @@ void structure_cours::create_main_sheet(  ods::Book& book)
     cell->SetValue("Option ");
     cell->SetStyle(style);
 
+
+    auto *style_center = book.CreateCellStyle();
+    style_center->SetHAlignment(ods::HAlign::Center);
+    ods::Row* row_start= row;
+    ods::Row* row_end= row;
+
     for (int i=0;i<liste_etudiant.size();i++)
     {
         student& e = liste_etudiant[i];
         row = main_sheet_->CreateRow(start++);
+        if (i==0)
+            row_start = row;
+        row_end = row;
+
         cell = row->CreateCell(0);
         cell->SetValue(e.name_);
         cell = row->CreateCell(1);
         cell->SetValue(e.first_name_);
         cell = row->CreateCell(2);
         cell->SetValue(e.option_);
-        auto *style_center = book.CreateCellStyle();
-        style_center->SetHAlignment(ods::HAlign::Center);
+
         cell->SetStyle(style_center);
 
         for(unsigned int i=tree_matiere_->col_debut_;i<tree_matiere_->col_fin_+1;i++)
@@ -243,6 +252,21 @@ void structure_cours::create_main_sheet(  ods::Book& book)
                 cell->SetStyle(style_center);
             }
         }
+    }
+    row = main_sheet_->CreateRow(start++);
+    row = main_sheet_->CreateRow(start++);
+    cell = row->CreateCell(2);
+    cell->SetValue("MOYENNE ");
+    cell->SetStyle(style_center);
+    for(unsigned int i=tree_matiere_->col_debut_;i<tree_matiere_->col_fin_+1;i++)
+    {
+        cell = row->CreateCell(3+i);
+        auto *formula = new ods::Formula();
+        auto* cell1 = row_start->cell(3+i);
+        auto* cell2 = row_end->cell(3+i);
+        formula->Special("AVERAGE",cell1, cell2 );
+        cell->SetFormula(formula);
+        cell->SetStyle(style_center);
     }
 }
 
@@ -328,6 +352,9 @@ void structure_cours::create_sub_sheet(ods::Book & book, matiere * m )
         cell->SetStyle(style_center);
     }
 
+    auto* row_start = row;
+    auto* row_end = row;
+    bool first = true;
     for (int i=0;i<liste_etudiant.size();i++)
     {
         student& e = liste_etudiant[i];
@@ -335,6 +362,13 @@ void structure_cours::create_sub_sheet(ods::Book & book, matiere * m )
         if (m->option_ == "all" || m->option_ == e.option_ )
         {
             row = m->sheet_->CreateRow(start++);
+            if (first)
+            {
+                row_start = row;
+                first = false;
+            }
+
+            row_end = row;
             cell = row->CreateCell(0);
             cell->SetValue(e.name_);
             cell = row->CreateCell(1);
@@ -411,9 +445,88 @@ void structure_cours::create_sub_sheet(ods::Book & book, matiere * m )
             p.col = 3;
             p.row = start-1;
             e.set_cell( p , m->sheet_, m->alias_);
-
-
         }
+    }
+
+    row = m->sheet_->CreateRow(start++);
+    row = m->sheet_->CreateRow(start++);
+    cell = row->CreateCell(2);
+    cell->SetValue("MOYENNE ");
+    cell->SetStyle(style_center);
+
+    for (int k=0;k<m->dep_matiere_.size()+1;k++)
+    {
+        cell = row->CreateCell(3+k);
+        auto *formula = new ods::Formula();
+        auto* cell1 = row_start->cell(3+k);
+        auto* cell2 = row_end->cell(3+k);
+        formula->Special("AVERAGE",cell1, cell2 );
+        cell->SetFormula(formula);
+        cell->SetStyle(style_center);
+    }
+
+    row = m->sheet_->CreateRow(start++);
+    cell = row->CreateCell(2);
+    cell->SetValue("MAX ");
+    cell->SetStyle(style_center);
+
+    for (int k=0;k<m->dep_matiere_.size()+1;k++)
+    {
+        cell = row->CreateCell(3+k);
+        auto *formula = new ods::Formula();
+        auto* cell1 = row_start->cell(3+k);
+        auto* cell2 = row_end->cell(3+k);
+        formula->Special("MAX",cell1, cell2 );
+        cell->SetFormula(formula);
+        cell->SetStyle(style_center);
+    }
+
+    row = m->sheet_->CreateRow(start++);
+    cell = row->CreateCell(2);
+    cell->SetValue("MIN ");
+    cell->SetStyle(style_center);
+
+    for (int k=0;k<m->dep_matiere_.size()+1;k++)
+    {
+        cell = row->CreateCell(3+k);
+        auto *formula = new ods::Formula();
+        auto* cell1 = row_start->cell(3+k);
+        auto* cell2 = row_end->cell(3+k);
+        formula->Special("MIN",cell1, cell2 );
+        cell->SetFormula(formula);
+        cell->SetStyle(style_center);
+    }
+
+    row = m->sheet_->CreateRow(start++);
+    cell = row->CreateCell(2);
+    cell->SetValue("ECART TYPE ");
+    cell->SetStyle(style_center);
+
+    for (int k=0;k<m->dep_matiere_.size()+1;k++)
+    {
+        cell = row->CreateCell(3+k);
+        auto *formula = new ods::Formula();
+        auto* cell1 = row_start->cell(3+k);
+        auto* cell2 = row_end->cell(3+k);
+        formula->Special("STDEV",cell1, cell2 );
+        cell->SetFormula(formula);
+        cell->SetStyle(style_center);
+    }
+
+    row = m->sheet_->CreateRow(start++);
+    cell = row->CreateCell(2);
+    cell->SetValue("MEDIANE");
+    cell->SetStyle(style_center);
+
+    for (int k=0;k<m->dep_matiere_.size()+1;k++)
+    {
+        cell = row->CreateCell(3+k);
+        auto *formula = new ods::Formula();
+        auto* cell1 = row_start->cell(3+k);
+        auto* cell2 = row_end->cell(3+k);
+        formula->Special("MEDIAN",cell1, cell2 );
+        cell->SetFormula(formula);
+        cell->SetStyle(style_center);
     }
 }
 

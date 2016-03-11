@@ -44,59 +44,62 @@ public:
 	Formula();
 	Formula(ods::Cell *cell, const QString &ref);
 	virtual ~Formula();
-	
+
 	void Add(ods::Cell *cell);
-	
+
 	void Add(ods::Sheet* sheet, ods::Cell *cell);
-	
+
 	void
 	Add(const double d) { formula_ += QString::number(d); }
-	
+
 	void
 	Add(const ods::Grouping g);
-	
+
 	void
 	Add(const ods::Op op);
-	
+
 	ods::Formula*
 	Clone();
-	
+
 	const QString&
 	err() { return err_; }
-	
+
 	void
 	err_set(const QString &s) { err_ = s; }
-	
+
 	bool
 	error() { return err_.size() > 0; }
-	
+
 	const QString&
 	formula() const { return formula_; }
-	
+
 	void
 	formula_set(const QString &s) { formula_ = s; }
-	
+
 	bool
 	GetDouble(ods::cell::Ref *cell_ref, double &num);
-	
+
 	ods::Cell*
 	source() { return source_; }
-	
+
 	void
 	source_set(ods::Cell *cell) { source_ = cell; }
-	
+
+	void Special(const QString& command, ods::Cell *cell_deb, ods::Cell* cell_fin);
+
+
 	void
 	UpdateValue();
-	
+
 	ods::Value&
 	value() { return value_; }
-	
+
 private:
 	NO_ASSIGN_COPY_MOVE(Formula);
-	
+
 	void
 	Init(const QStringRef&);
-	
+
 	QString			err_;
 	ods::Cell		*source_ = nullptr;
 	QString			formula_;

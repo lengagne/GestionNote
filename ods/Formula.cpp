@@ -61,7 +61,7 @@ void Formula::Add(ods::Sheet* sheet, ods::Cell *cell)
 	formula_ += sheet->name();
 	formula_ += QString(".");
 	formula_ += cell->Address();
-	formula_ += QString("]");	
+	formula_ += QString("]");
 }
 
 void
@@ -118,6 +118,15 @@ Formula::GetDouble(ods::cell::Ref *cell_ref, double &num)
 	return ok;
 }
 
+void Formula::Special(const QString& command, ods::Cell *cell_deb, ods::Cell* cell_fin)
+{
+	formula_ += command + QString("(");
+	formula_ += cell_deb->Address();
+	formula_ += QString(":");
+	formula_ += cell_fin->Address();
+	formula_ += QString(")");
+}
+
 void
 Formula::UpdateValue()
 {
@@ -162,7 +171,7 @@ Formula::UpdateValue()
 					cell_name.toString();
 				return;
 			}
-			
+
 			if (!GetDouble(cell_ref, num))
 			{
 				/**
@@ -176,7 +185,7 @@ Formula::UpdateValue()
 				err_ = QLatin1String("GetDouble() failed");
 				return;
 			}
-			
+
 			number_formula.append(QString::number(num));
 			i = index;
 		} else {
@@ -199,7 +208,7 @@ Formula::UpdateValue()
 			err_ = QLatin1String("Value not a number");
 			return;
 		}
-		
+
 		if (number_formula.size() == 0)
 			break;
 		QString str_num = QString::number(*value_.AsDouble());
