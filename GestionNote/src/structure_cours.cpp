@@ -15,10 +15,10 @@ structure_cours::~structure_cours()
 	std::cout<<"Destruction de l'objet strucutre cours"<<std::endl;
 }
 
-void structure_cours::add_main_sheet_line( matiere * tree, ods::Row * row, int level, ods::Cell* previous)
+void structure_cours::add_main_sheet_line( ods::Book& book, matiere * tree, ods::Row * row, int level, ods::Cell* previous)
 {
     qDebug()<<"La matiere "<< tree->alias_<<" a "<< tree->dads_.size()<<" parents";
-	auto *style = book_master_.CreateCellStyle();
+	auto *style = book.CreateCellStyle();
 	style->SetBold(true);
 	style->SetHAlignment(ods::HAlign::Center);
 //	style->SetBackgroundColor(QColor(255,255,0,100));
@@ -68,7 +68,7 @@ void structure_cours::add_main_sheet_line( matiere * tree, ods::Row * row, int l
     for (int i=0;i<tree->dep_matiere_.size();i++)
     {
         if ( tree->dep_matiere_[i]->dads_.size()>0 && tree->dep_matiere_[i]->dads_[0]->alias_ == tree->alias_)
-            add_main_sheet_line(tree->dep_matiere_[i],row,level,cell);
+            add_main_sheet_line(book, tree->dep_matiere_[i],row,level,cell);
     }
     std::cout<<  tree->alias_.toStdString() <<" cellule de fin = "<< tree->col_fin_<<std::endl;
 
@@ -121,136 +121,41 @@ void structure_cours::create_project( const QString & cours_xml,
 
 void structure_cours::create_files()
 {
-	auto *style_center = book_master_.CreateCellStyle();
+    ods::Book book_master;
+	auto *style_center = book_master.CreateCellStyle();
 	style_center->SetHAlignment(ods::HAlign::Center);
 
-    main_sheet_ = book_master_.CreateSheet(output_);
-    create_sub_sheet( tree_matiere_ );
-    create_main_sheet(  );
-/*
-	int max_level = get_biggest_level();
-// 	std::cout<<"max_level = "<< max_level <<std::endl;
-	for (int i=0;i<max_level+1;i++)
-	{
-		for (int j=0;j<liste_cours.size();j++)	if (liste_cours[j].tree_level_ == i)
-		{
-			liste_cours[j].sheet = book_master_.CreateSheet(liste_cours[j].alias);
+    main_sheet_ = book_master.CreateSheet(output_);
+    create_sub_sheet( book_master,tree_matiere_ );
+    create_main_sheet( book_master  );
 
-			// ajouter les etudiants
-			int start=START_LINE;
-			auto *row = liste_cours[j].sheet->CreateRow(start++); // create first/top row
-			int main_it = START_COL;
-			auto *cell = row->CreateCell(main_it);
-			cell->SetValue(liste_cours[j].alias);
-			cell->SetStyle(style_center);
-
-			for (int k=0;k<liste_cours[j].dependance.size();k++)
-			{
-				cell = row->CreateCell(main_it+1+k);
-				cell->SetValue(liste_cours[j].dependance[k]);
-				cell->SetStyle(style_center);
-			}
-
-
-			row = liste_cours[j].sheet->CreateRow(start++); // create first/top row
-			cell = row->CreateCell(0);
-			cell->SetRowColSpan(1, 2);
-			cell->SetValue("NOM");
-			cell = row->CreateCell(2);
-			cell->SetRowColSpan(1, 2);
-			cell->SetValue("PRENOM");
-			cell = row->CreateCell(4);
-			cell->SetValue("OPTION");
-			cell->SetStyle(style_center);
-
-
-			auto *row_coeff = row;
-			for (int k=0;k<liste_cours[j].dependance.size();k++)
-			{
-				cell = row_coeff->CreateCell(6+k);
-				cell->SetValue(liste_cours[j].coeff[k]);
-				cell->SetStyle(style_center);
-			}
-
-			for (int k=0;k<liste_etudiant.size();k++)
-			{
-				row = liste_cours[j].sheet->CreateRow(start++); // create first/top row
-				cell = row->CreateCell(0);
-				cell->SetRowColSpan(1, 2);
-				cell->SetValue(liste_etudiant[k].nom);
-				cell = row->CreateCell(2);
-				cell->SetRowColSpan(1, 2);
-				cell->SetValue(liste_etudiant[k].prenom);
-				cell = row->CreateCell(4);
-				cell->SetValue(liste_etudiant[k].option);
-				cell->SetStyle(style_center);
-
-				cell = row->CreateCell(5);
-				if(liste_cours[j].dependance.size())
-				{
-					auto *formula = new ods::Formula();
-					formula->Add(ods::Grouping::Open);
-					for (int k=0;k<liste_cours[j].dependance.size();k++)
-					{
-						ods::Cell* cell_coeff = row_coeff->cell(6+k);
-						ods::Cell* cell_value = row->CreateCell(6+k);
-						formula->Add(cell_coeff);
-						formula->Add(ods::Op::Mult);
-						formula->Add(cell_value);
-
-						if (k!=liste_cours[j].dependance.size()-1)
-							formula->Add(ods::Op::Add);
-					}
-					formula->Add(ods::Grouping::Close);
-					formula->Add(ods::Op::Divide);
-					formula->Add(ods::Grouping::Open);
-					for (int k=0;k<liste_cours[j].dependance.size();k++)
-					{
-						ods::Cell* cell_coeff = row_coeff->cell(6+k);
-						formula->Add(cell_coeff);
-						if (k!=liste_cours[j].dependance.size()-1)
-							formula->Add(ods::Op::Add);
-					}
-					formula->Add(ods::Grouping::Close);
-					cell->SetFormula(formula);
-				}else
-				{
-					cell->SetValue(0.0);
-				}
-				cell->SetStyle(style_center);
-			}
-		}
-	}
-
-	for (int j=0;j<liste_cours.size();j++)
-	{
-		for (int k=0;k<liste_cours[j].dependance.size();k++)
-		{
-			auto *dep_sheet = book_master_.sheet(liste_cours[j].dependance[k]);
-			for (int kk=0;kk<liste_etudiant.size();kk++)
-			{
-				auto* dep_row = dep_sheet->row(START_LINE+2+kk);
-				auto* dep_cell = dep_row->cell(START_COL);
-
-				auto *sheet = book_master_.sheet(liste_cours[j].alias);
-				auto *row = sheet->row(START_LINE+2+kk);
-				auto *cell = row->cell(START_COL+1+k);
-				auto *formula = new ods::Formula();
-				formula->Add(dep_sheet,dep_cell);
-				cell->SetFormula(formula);
-				cell->SetStyle(style_center);
-			}
-		}
-	}
-
-*/
 	auto path = output_ + ".ods";
 	QFile target(path);
-	QString err = book_master_.Save(target);
+	QString err = book_master.Save(target);
 	if (!err.isEmpty())
 		qDebug() << "Error saving ods file:" << err;
 	else
 		qDebug() << "Saved to" << target.fileName();
+
+    // create individual sheet
+    int dummy = system("mkdir notes");
+
+    for (int i=0;i<liste_cours.size();i++)
+    {
+        if (liste_cours[i].dep_matiere_.size() == 0)
+        {
+            ods::Book book;
+            create_sub_sheet( book,&liste_cours[i] );
+            auto path = "notes/" +liste_cours[i].alias_ + ".ods";
+            QFile target(path);
+            QString err = book.Save(target);
+            if (!err.isEmpty())
+                qDebug() << "Error saving ods file:" << err;
+            else
+                qDebug() << "Saved to" << target.fileName();
+        }
+    }
+
 
 /*	// create prof files
 	for (int i=0;i<liste_prof.size();i++)
@@ -271,11 +176,11 @@ void structure_cours::create_files()
 */
 }
 
-void structure_cours::create_main_sheet(  )
+void structure_cours::create_main_sheet(  ods::Book& book)
 {
     /*/ writing columns*/
     int start = 0;
-	auto *style = book_master_.CreateCellStyle();
+	auto *style = book.CreateCellStyle();
 	style->SetBold(true);
 	style->SetHAlignment(ods::HAlign::Center);
 	style->SetBackgroundColor(QColor(255,255,0,100));
@@ -292,7 +197,7 @@ void structure_cours::create_main_sheet(  )
     {
         auto *row = main_sheet_->CreateRow(start++);
         auto* cell = row->CreateCell(2);
-        add_main_sheet_line( tree_matiere_, row, i,cell);
+        add_main_sheet_line( book,tree_matiere_, row, i,cell);
     }
 
 
@@ -311,123 +216,47 @@ void structure_cours::create_main_sheet(  )
     for (int i=0;i<liste_etudiant.size();i++)
     {
         student& e = liste_etudiant[i];
-        //qDebug()<<"Working on student "<< e.name_;
-//        if (m->option_ == "all" || m->option_ == e.option_ )
-//        {
-            row = main_sheet_->CreateRow(start++);
-            cell = row->CreateCell(0);
-            cell->SetValue(e.name_);
-            cell = row->CreateCell(1);
-            cell->SetValue(e.first_name_);
-            cell = row->CreateCell(2);
-            cell->SetValue(e.option_);
-            auto *style_center = book_master_.CreateCellStyle();
-            style_center->SetHAlignment(ods::HAlign::Center);
-            cell->SetStyle(style_center);
+        row = main_sheet_->CreateRow(start++);
+        cell = row->CreateCell(0);
+        cell->SetValue(e.name_);
+        cell = row->CreateCell(1);
+        cell->SetValue(e.first_name_);
+        cell = row->CreateCell(2);
+        cell->SetValue(e.option_);
+        auto *style_center = book.CreateCellStyle();
+        style_center->SetHAlignment(ods::HAlign::Center);
+        cell->SetStyle(style_center);
 
-            for(unsigned int i=tree_matiere_->col_debut_;i<tree_matiere_->col_fin_+1;i++)
+        for(unsigned int i=tree_matiere_->col_debut_;i<tree_matiere_->col_fin_+1;i++)
+        {
+            cell = row->CreateCell(i);
+            QString current_matiere = get_matiere_from_col(i);
+            place p = e.get_dep_cell( current_matiere );
+            if (p.row != -1)
             {
-                cell = row->CreateCell(i);
-                QString current_matiere = get_matiere_from_col(i);
-                place p = e.get_dep_cell( current_matiere );
-                if (p.row != -1)
-                {
-                    auto* sheet_dep = book_master_.sheet(current_matiere);
-                    auto *row_dep = sheet_dep->row(p.row);
-                    auto *cell_dep = row_dep->cell(p.col);
-                    auto *formula1 = new ods::Formula();
-                    formula1->Add(sheet_dep, cell_dep );
-                    cell->SetFormula(formula1);
-                    cell->SetStyle(style_center);
-                }
-            }
-
-
-            //std::cout<<"matiere = "<< m->name_.toStdString()<<" nombre de dépendance = "<< m->dep_matiere_.size()<<std::endl;
- /*           if (m->dep_matiere_.size()>0)
-            {
-                //std::cout<<"in the loop"<<std::endl;
-                // mise en place de l'équation
-                auto *formula = new ods::Formula();
-                formula->Add(ods::Grouping::Open);
-                for (int k=0;k<m->dep_matiere_.size();k++)
-                    if (m->dep_matiere_[k]->option_ == "all" || m->dep_matiere_[k]->option_ == e.option_ )
-                    {
-                        if (k!=0)
-                            formula->Add(ods::Op::Add);
-
-                        ods::Cell* cell_coeff = row_coeff->cell(4+k);
-                        ods::Cell* cell_value = row->CreateCell(4+k);
-                        formula->Add(cell_coeff);
-                        formula->Add(ods::Op::Mult);
-                        formula->Add(cell_value);
-                    }else
-                    {
-                        row->CreateCell(4+k);
-                    }
-                formula->Add(ods::Grouping::Close);
-                formula->Add(ods::Op::Divide);
-                formula->Add(ods::Grouping::Open);
-                for (int k=0;k<m->dep_matiere_.size();k++)   if (m->dep_matiere_[k]->option_ == "all" || m->dep_matiere_[k]->option_ == e.option_ )
-                {
-                    if (k!=0)
-                        formula->Add(ods::Op::Add);
-
-                    ods::Cell* cell_coeff = row_coeff->cell(4+k);
-                    formula->Add(cell_coeff);
-
-                }
-                formula->Add(ods::Grouping::Close);
-                cell->SetFormula(formula);
+                auto* sheet_dep = book.sheet(current_matiere);
+                auto *row_dep = sheet_dep->row(p.row);
+                auto *cell_dep = row_dep->cell(p.col);
+                auto *formula1 = new ods::Formula();
+                formula1->Add(sheet_dep, cell_dep );
+                cell->SetFormula(formula1);
                 cell->SetStyle(style_center);
-
-                // copie des feuilles précédentes
-                for (int k=0;k<m->dep_matiere_.size();k++)
-                {
-                    cell = row->cell(4+k);
-                    cell->SetStyle(style_center);
-
-                    if (m->dep_matiere_[k]->option_ == "all" || m->dep_matiere_[k]->option_ == e.option_ )
-                    {
-                        if (e.get_dep(m->dep_matiere_[k]->alias_))
-                        {
-                            place p = e.get_dep_cell( m->dep_matiere_[k]->alias_);
-                            auto* sheet_dep = book_master_.sheet(m->dep_matiere_[k]->alias_);
-                            auto *row_dep = sheet_dep->row(p.row);
-                            auto *cell_dep = row_dep->cell(p.col);
-                            auto *formula1 = new ods::Formula();
-                            formula1->Add(sheet_dep, cell_dep );
-                            cell->SetFormula(formula1);
-                            cell->SetValue(m->dep_matiere_[k]->alias_);
-                        }
-                    }
-                }
             }
-
-            //qDebug()<<" matiere = "<< m->alias_<<"  student = "<< e.name_;
-            // save value of current sheet;
-            place p;
-            p.col = 3;
-            p.row = start-1;
-            e.set_cell( p , m->sheet_, m->alias_);
-
-
-        }*/
+        }
     }
-
 }
 
-void structure_cours::create_sub_sheet( matiere * m )
+void structure_cours::create_sub_sheet(ods::Book & book, matiere * m )
 {
     std::cout<<" Creating sheet for "<< m->alias_.toStdString()<<std::endl;
-    auto *style_center = book_master_.CreateCellStyle();
+    auto *style_center = book.CreateCellStyle();
     style_center->SetHAlignment(ods::HAlign::Center);
 
-    m->sheet_ = book_master_.CreateSheet(m->alias_);
+    m->sheet_ = book.CreateSheet(m->alias_);
     // create the sheet of the child
     for (int i=0;i< m->dep_matiere_.size();i++)
     {
-        create_sub_sheet(m->dep_matiere_[i]);
+        create_sub_sheet(book, m->dep_matiere_[i]);
     }
 
     // write info on the head of the page
@@ -564,7 +393,7 @@ void structure_cours::create_sub_sheet( matiere * m )
                         if (e.get_dep(m->dep_matiere_[k]->alias_))
                         {
                             place p = e.get_dep_cell( m->dep_matiere_[k]->alias_);
-                            auto* sheet_dep = book_master_.sheet(m->dep_matiere_[k]->alias_);
+                            auto* sheet_dep = book.sheet(m->dep_matiere_[k]->alias_);
                             auto *row_dep = sheet_dep->row(p.row);
                             auto *cell_dep = row_dep->cell(p.col);
                             auto *formula1 = new ods::Formula();
@@ -995,6 +824,12 @@ void structure_cours::read_xml( QString input)
 				new_cours.option_ = option.text().trimmed();
 			}else
 				new_cours.option_ = "all";
+
+			QDomElement to_validate = elm.namedItem("to_validate").toElement();
+			if ( !to_validate.isNull() ) { // We have a <name>..</name> element in the set
+				new_cours.must_validate_ =  ( to_validate.text().trimmed() =="yes" || to_validate.text().trimmed() == "oui");
+			}else
+				new_cours.must_validate_ = "all";
 
 			new_cours.tree_level_ = -1;
 //			new_cours.sheet =  nullptr;

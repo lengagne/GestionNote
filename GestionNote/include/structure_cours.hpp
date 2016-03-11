@@ -36,13 +36,13 @@ public:
 
 private:
 
-    void add_main_sheet_line( matiere * tree, ods::Row * r, int level, ods::Cell* previous);
+    void add_main_sheet_line( ods::Book& book,  matiere * tree,ods::Row * r, int level, ods::Cell* previous);
 
 	void create_files();
 
-    void create_main_sheet(  );
+    void create_main_sheet( ods::Book& book );
 
-    void create_sub_sheet( matiere * m );
+    void create_sub_sheet( ods::Book& book, matiere * m );
 
     QString get_matiere_from_col(unsigned int i);
 
@@ -66,7 +66,7 @@ private:
 	std::vector<student> liste_etudiant;
 	matiere* tree_matiere_;
 
-	ods::Book book_master_;
+
 
 	QString cours_xml_;
 	QString student_ods_;

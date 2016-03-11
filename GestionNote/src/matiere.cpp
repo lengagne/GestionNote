@@ -46,7 +46,6 @@ unsigned int matiere::update_col(unsigned int c)
                 c = dep_matiere_[i]->update_col(c+1) ;
         }
     }
-
     col_fin_ = c;
     std::cout<<"\tfin  matiere = "<< alias_.toStdString()<<"\t deb = "<< col_debut_<<"\t fin = "<< col_fin_<<"\t\tc= "<< c<<std::endl;
     return col_fin_;
