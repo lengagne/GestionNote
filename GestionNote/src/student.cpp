@@ -38,6 +38,10 @@ place student::get_dep_cell(const QString& name)
     for (int i=0;i<notes_.size();i++)
         if (notes_[i].name == name)
             return  notes_[i].cell;
+    place out;
+    out.row = -1;
+    out.col = -1;
+    return out;
 }
 
 void student::set_cell( const place& p ,

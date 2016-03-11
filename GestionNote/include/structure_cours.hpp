@@ -44,6 +44,8 @@ private:
 
     void create_sub_sheet( matiere * m );
 
+    QString get_matiere_from_col(unsigned int i);
+
 	bool find_cell(int * col, int * row, QString name, QString ods_file);
 
 	unsigned int get_biggest_level();
@@ -69,6 +71,8 @@ private:
 	QString cours_xml_;
 	QString student_ods_;
 	QString output_;
+
+	unsigned int max_level_;
 
 	ods::Sheet *main_sheet_;
 };
