@@ -35,7 +35,7 @@ void structure_cours::add_main_sheet_line( matiere * tree, ods::Row * row, int l
         cell = row->CreateCell(tree->col_debut_);
         std::cout<<tree->alias_.toStdString()<<"  une seule cellule "<< tree->col_debut_ <<std::endl;
         cell->SetValue( tree->alias_);
-        cell->SetStyle(style);
+        //cell->SetStyle(style);
     }else if (tree->tree_level_ == level)
     {
         cell = row->CreateCell(tree->col_debut_);
