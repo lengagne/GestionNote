@@ -260,11 +260,71 @@ void structure_cours::create_main_sheet(  ods::Book& book)
     cell->SetStyle(style_center);
     for(unsigned int i=tree_matiere_->col_debut_;i<tree_matiere_->col_fin_+1;i++)
     {
-        cell = row->CreateCell(3+i);
+        cell = row->CreateCell(i);
         auto *formula = new ods::Formula();
-        auto* cell1 = row_start->cell(3+i);
-        auto* cell2 = row_end->cell(3+i);
+        auto* cell1 = row_start->cell(i);
+        auto* cell2 = row_end->cell(i);
         formula->Special("AVERAGE",cell1, cell2 );
+        cell->SetFormula(formula);
+        cell->SetStyle(style_center);
+    }
+
+    row = main_sheet_->CreateRow(start++);
+    cell = row->CreateCell(2);
+    cell->SetValue("MAX ");
+    cell->SetStyle(style_center);
+    for(unsigned int i=tree_matiere_->col_debut_;i<tree_matiere_->col_fin_+1;i++)
+    {
+        cell = row->CreateCell(i);
+        auto *formula = new ods::Formula();
+        auto* cell1 = row_start->cell(i);
+        auto* cell2 = row_end->cell(i);
+        formula->Special("MAx",cell1, cell2 );
+        cell->SetFormula(formula);
+        cell->SetStyle(style_center);
+    }
+
+    row = main_sheet_->CreateRow(start++);
+    cell = row->CreateCell(2);
+    cell->SetValue("MIN ");
+    cell->SetStyle(style_center);
+    for(unsigned int i=tree_matiere_->col_debut_;i<tree_matiere_->col_fin_+1;i++)
+    {
+        cell = row->CreateCell(i);
+        auto *formula = new ods::Formula();
+        auto* cell1 = row_start->cell(i);
+        auto* cell2 = row_end->cell(i);
+        formula->Special("MIN",cell1, cell2 );
+        cell->SetFormula(formula);
+        cell->SetStyle(style_center);
+    }
+
+    row = main_sheet_->CreateRow(start++);
+    cell = row->CreateCell(2);
+    cell->SetValue("ECART TYPE ");
+    cell->SetStyle(style_center);
+    for(unsigned int i=tree_matiere_->col_debut_;i<tree_matiere_->col_fin_+1;i++)
+    {
+        cell = row->CreateCell(i);
+        auto *formula = new ods::Formula();
+        auto* cell1 = row_start->cell(i);
+        auto* cell2 = row_end->cell(i);
+        formula->Special("STDEV",cell1, cell2 );
+        cell->SetFormula(formula);
+        cell->SetStyle(style_center);
+    }
+
+    row = main_sheet_->CreateRow(start++);
+    cell = row->CreateCell(2);
+    cell->SetValue("MEDIANE ");
+    cell->SetStyle(style_center);
+    for(unsigned int i=tree_matiere_->col_debut_;i<tree_matiere_->col_fin_+1;i++)
+    {
+        cell = row->CreateCell(i);
+        auto *formula = new ods::Formula();
+        auto* cell1 = row_start->cell(i);
+        auto* cell2 = row_end->cell(i);
+        formula->Special("MEDIAN",cell1, cell2 );
         cell->SetFormula(formula);
         cell->SetStyle(style_center);
     }
