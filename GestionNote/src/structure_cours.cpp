@@ -1,6 +1,10 @@
 #include "structure_cours.hpp"
 #define PROJECT_NAME "GestionNoteProject.xml"
 
+#include <iostream>
+#include <fstream>
+
+
 structure_cours::structure_cours()
 {
 	std::cout<<"Creation de l'objet strucutre cours"<<std::endl;
@@ -757,67 +761,10 @@ bool structure_cours::read_project()
 		file.close();
 	}
 	QDomElement root = document.firstChildElement();
-
-//	QDomElement nodes = root.elementsByTagName("project");
-/*// 	qDebug() << "# nodes = " << nodes.count();
-	for(int i = 0; i < nodes.count(); i++)
-	{
-		QDomNode elm = nodes.at(i);
-		if(elm.isElement())
-		{
-			matiere new_cours;
-			new_cours.referent_ = "none";
-			// lecture du nom
-			QDomElement name = elm.namedItem("nom").toElement();
-			if ( !name.isNull() ) { // We have a <name>..</name> element in the set
-				new_cours.name_ = name.text().trimmed();
-			}else
-			{
-				std::cerr<<"nom not found "<<std::endl;
-				exit(0);
-			}
-// 			qDebug() << new_cours.nom;
-
-			QDomElement alias = elm.namedItem("alias").toElement();
-			if ( !alias.isNull() ) { // We have a <name>..</name> element in the set
-				new_cours.alias_ = alias.text().trimmed();
-			}
-
-			// lecture des dépendances
-			QDomElement e = elm.firstChildElement( "dependance" );
-			while ( !e.isNull() ) {
-				new_cours.dep_matiere_name_.push_back(e.text().trimmed());
-				new_cours.coeff_.push_back(e.attribute("coeff").toDouble());
-// 				qDebug() <<"coeff = "<< e.attribute("coeff");
-// 				qDebug() <<"dependance = "<< e.text().trimmed();
-				e = e.nextSiblingElement( "dependance" );
-			}
-
-			QDomElement responsable = elm.namedItem("responsable").toElement();
-			if ( !responsable.isNull() ) { // We have a <name>..</name> element in the set
-				new_cours.referent_ = responsable.text().trimmed();
-// 				qDebug() <<"responsable = "<< responsable.text().trimmed();
-			}
-
-			QDomElement apogee = elm.namedItem("apogee").toElement();
-			if ( !apogee.isNull() ) { // We have a <name>..</name> element in the set
-				new_cours.apogee_ = apogee.text().trimmed();
-			}
-
-			QDomElement option = elm.namedItem("option").toElement();
-			if ( !option.isNull() ) { // We have a <name>..</name> element in the set
-				new_cours.option_ = option.text().trimmed();
-			}else
-				new_cours.option_ = "";
-
-			new_cours.tree_level_ = -1;
-//			new_cours.sheet =  nullptr;
-
-			liste_cours.push_back(new_cours);
-		}
-	}*/
-
-
+	QDomElement cours = root.namedItem("cours").toElement();
+	cours_xml_ = cours.text().trimmed();
+	qDebug()<<" cours_xml_ ="<< cours_xml_;
+	read_xml(cours_xml_);
 	return true;
 }
 
@@ -1057,6 +1004,29 @@ void structure_cours::read_xml( QString input)
             }
         }
     }
+}
 
+void structure_cours::send_mail_profs()
+{
+//echo -e "Bonjour Bénédicte Bousset \n Je te joins les fichiers à compléter" | mutt  -s "Fichier pour notes GEA" sebastienlengagne@yahoo.fr -a ./notes/AURO5.ods
+    std::ofstream outfile ("send_mail_prof.sh");
+
+    for (int i=0;i<liste_profs.size();i++)  if(liste_profs[i].matieres_.size()>0)
+    {
+        outfile << "echo \"Bonjour "<<liste_profs[i].first_name_.toStdString()<<" "<< liste_profs[i].name_.toStdString()<<", \n \n";
+        outfile <<"Je te joins les fichiers à compléter concernant les matières : \\n";
+        for (int j=0;j<liste_profs[i].matieres_.size();j++)
+            outfile << liste_profs[i].matieres_[j]->alias_.toStdString()<<" \\n";
+        outfile <<"\n Désolé en cas de réception multiple";
+        outfile <<"\n \n Bonne journée \n";
+        outfile <<"Sébastien Lengagne \n \n";
+        outfile <<"---- Mail généré automatiquement par GestionNote :  https://github.com/lengagne/GestionNote ---\n ";
+        outfile << " \" | mutt ";
+        outfile<<" -s \"[GE4A] Fichier pour notes GE4A\" -c sebastien.lengagne@univ-bpclermont.fr "<< liste_profs[i].email_.toStdString()<<" ";
+        for (int j=0;j<liste_profs[i].matieres_.size();j++)
+            outfile << " -a ./notes/"<< liste_profs[i].matieres_[j]->alias_.toStdString()<<".ods";
+        outfile<<"  "<<std::endl<<std::endl;
+    }
+    outfile.close();
 }
 

@@ -31,10 +31,11 @@ public:
 
     bool read_project();
 
-
 	void read_student(QString ods);
 
 	void read_xml( QString input);
+
+	void send_mail_profs();
 
 private:
 

@@ -41,7 +41,8 @@ void print_help()
 	std::cout<<"aide"<<std::endl;
 	std::cout<<"afficher arborescence cours :    GestionNote show_tree_lesson *.xml "<<std::endl;
 	std::cout<<"afficher etudiant :    GestionNote show_students *.ods "<<std::endl;
-	std::cout<<"afficher proffesseur :    GestionNote show_prof *.xml "<<std::endl;
+	std::cout<<"afficher professeur :    GestionNote show_prof *.xml "<<std::endl;
+	std::cout<<"afficher professeur :    GestionNote send_mail_all_profs "<<std::endl;
 	std::cout<<"Créer nouveau projet :  GestionNote new lessons.xml student.ods output"<<std::endl;
 
 }
@@ -56,6 +57,12 @@ int main(int argc, char *argv[])
         if (command == "help")
         {
             print_help();
+            return 1;
+        }else if ( command =="send_mail_all_profs")
+        {
+            structure_cours cours;
+            cours.read_project();
+            cours.send_mail_profs();
             return 1;
         }
     }else if (argc == 3)
