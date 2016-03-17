@@ -103,6 +103,8 @@ void structure_cours::create_project( const QString & cours_xml,
 	xmlWriter.writeTextElement("cours", cours_xml );
 	xmlWriter.writeTextElement("students", student_ods);
 	xmlWriter.writeTextElement("output", output);
+	xmlWriter.writeTextElement("referent", "");
+	xmlWriter.writeTextElement("referent_email", "");
 
 	xmlWriter.writeEndElement();
     file.close();
@@ -764,6 +766,31 @@ bool structure_cours::read_project()
 	QDomElement cours = root.namedItem("cours").toElement();
 	cours_xml_ = cours.text().trimmed();
 	qDebug()<<" cours_xml_ ="<< cours_xml_;
+
+	QDomElement referent = root.namedItem("referent").toElement();
+	referent_ ="";
+    if ( !referent.isNull() ) { // We have a <name>..</name> element in the set
+        referent_ = referent.text().trimmed();
+    }
+
+    if(referent_=="")
+    {
+        std::cerr<<"Please edit the file " << PROJECT_NAME<<" and add the referent name"<<std::endl;
+        exit(0);
+    }
+
+	QDomElement email = root.namedItem("referent_email").toElement();
+	email_ ="";
+    if ( !email.isNull() ) { // We have a <name>..</name> element in the set
+        email_ = email.text().trimmed();
+    }
+    if(email_=="")
+    {
+        std::cerr<<"Please edit the file " << PROJECT_NAME<<" and add the email of the referent"<<std::endl;
+        exit(0);
+    }
+
+
 	read_xml(cours_xml_);
 	return true;
 }
@@ -1019,10 +1046,10 @@ void structure_cours::send_mail_profs()
             outfile << liste_profs[i].matieres_[j]->alias_.toStdString()<<" \\n";
         outfile <<"\n Désolé en cas de réception multiple";
         outfile <<"\n \n Bonne journée \n";
-        outfile <<"Sébastien Lengagne \n \n";
+        outfile << referent_.toStdString() <<"\n \n";
         outfile <<"---- Mail généré automatiquement par GestionNote :  https://github.com/lengagne/GestionNote ---\n ";
         outfile << " \" | mutt ";
-        outfile<<" -s \"[GE4A] Fichier pour notes GE4A\" -c sebastien.lengagne@univ-bpclermont.fr "<< liste_profs[i].email_.toStdString()<<" ";
+        outfile<<" -s \"[GE4A] Fichier pour notes GE4A\" -c "<<email_.toStdString() <<" "<< liste_profs[i].email_.toStdString()<<" ";
         for (int j=0;j<liste_profs[i].matieres_.size();j++)
             outfile << " -a ./notes/"<< liste_profs[i].matieres_[j]->alias_.toStdString()<<".ods";
         outfile<<"  "<<std::endl<<std::endl;

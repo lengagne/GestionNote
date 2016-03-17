@@ -74,6 +74,9 @@ private:
 	QString student_ods_;
 	QString output_;
 
+	QString referent_;
+	QString email_;
+
 	unsigned int max_level_;
 
 	ods::Sheet *main_sheet_;
