@@ -1,19 +1,31 @@
 #include "structure_cours.hpp"
 #define PROJECT_NAME "GestionNoteProject.xml"
 
-#include <iostream>
-#include <fstream>
+#include <time.h>
+
+// Get current date/time, format is YYYY-MM-DD.HH:mm:ss
+const std::string currentDateTime() {
+    time_t     now = time(0);
+    struct tm  tstruct;
+    char       buf[80];
+    tstruct = *localtime(&now);
+    // Visit http://en.cppreference.com/w/cpp/chrono/c/strftime
+    // for more information about date/time format
+    strftime(buf, sizeof(buf), "%Y-%m-%d.%X", &tstruct);
+
+    return buf;
+}
+
 
 
 structure_cours::structure_cours()
 {
-	std::cout<<"Creation de l'objet strucutre cours"<<std::endl;
-
+//	std::cout<<"Creation de l'objet strucutre cours"<<std::endl;
 }
 
 structure_cours::~structure_cours()
 {
-	std::cout<<"Destruction de l'objet strucutre cours"<<std::endl;
+//	std::cout<<"Destruction de l'objet strucutre cours"<<std::endl;
 }
 
 void structure_cours::add_main_sheet_line( ods::Book& book, matiere * tree, ods::Row * row, int level, ods::Cell* previous)
@@ -138,7 +150,7 @@ void structure_cours::create_files()
 		qDebug() << "Saved to" << target.fileName();
 
     // create individual sheet
-    int dummy = system("mkdir notes");
+    int dummy = system("mkdir notes mem_ods");
 
     for (int i=0;i<liste_cours.size();i++)
     {
@@ -419,7 +431,7 @@ void structure_cours::create_sub_sheet(ods::Book & book, matiere * m )
             cell->SetStyle(style_center);
 
             cell = row->CreateCell(3);
-            //std::cout<<"matiere = "<< m->name_.toStdString()<<" nombre de dépendance = "<< m->dep_matiere_.size()<<std::endl;
+            cell->SetStyle(style_center);
             if (m->dep_matiere_.size()>0)
             {
                 //std::cout<<"in the loop"<<std::endl;
@@ -571,19 +583,6 @@ void structure_cours::create_sub_sheet(ods::Book & book, matiere * m )
     }
 }
 
-/*cours* structure_cours::get_cours(QString alias)
-{
-	for (int i=0;i<liste_cours.size();i++)
-	{
-		if (liste_cours[i].alias == alias.trimmed())
-		{
-			return & liste_cours[i];
-		}
-	}
-	std::cerr<<" Cannot find dependency of "<< alias.toStdString()<<std::endl;
-	exit(0);
-}*/
-
 QString structure_cours::get_matiere_from_col(unsigned int in)
 {
     for (int i=0;i<liste_cours.size();i++)
@@ -593,9 +592,28 @@ QString structure_cours::get_matiere_from_col(unsigned int in)
     return "not_found";
 }
 
+bool structure_cours::find_cell(int * COL, int * ROW, QString student, QString alias, ods::Sheet * s)
+{
+//    qDebug()<<" find_cell "<< student <<" "<< alias;
+    int cs, rs, ca, ra;
+    if (!find_cell(&cs,&rs,student,s,1))
+    {
+        std::cout<<"Error cannot find "<< student.toStdString()<<std::endl;
+        return false;
+    }
+//    std::cout<<" looking for "<<alias.toStdString()<<std::endl;
+    if (!find_cell(&ca,&ra,alias,s,2))
+    {
+        std::cout<<"Error cannot find "<< alias.toStdString()<<std::endl;
+        return false;
+    }
+    *COL = ca;
+    *ROW = rs;
+//    std::cout<<" col ="<< ca <<"\t row = "<<rs <<"\t\t"<<ra<<" "<< cs <<std::endl;
+    return true;
+}
 
-
-bool  structure_cours::find_cell(int * COL, int * ROW, QString name,QString ods_file)
+bool  structure_cours::find_cell(int * COL, int * ROW, QString name,QString ods_file, int count)
 {
 	name.trimmed();
 	QFile file(ods_file);
@@ -606,12 +624,17 @@ bool  structure_cours::find_cell(int * COL, int * ROW, QString name,QString ods_
 	}
 	ods::Book book_in(ods_file);
 	auto *sheet_in = book_in.sheet(0);
-	if (sheet_in == nullptr)
+	return find_cell(COL,ROW,name,sheet_in,count);
+}
+
+bool  structure_cours::find_cell(int * COL, int * ROW, QString name,ods::Sheet * sheet_in, int count)
+{
+    if (sheet_in == nullptr)
 	{
 		qDebug() << "No sheet at 0";
 		return false;
 	}
-
+    int cpt = 0;
 	ods::Cell *cell_read = nullptr;
 	for (int i=0;i<100;i++)
 	{
@@ -636,7 +659,9 @@ bool  structure_cours::find_cell(int * COL, int * ROW, QString name,QString ods_
 				{
 					*COL = j;
 					*ROW = i;
-					return true;
+					cpt++;
+					if (cpt  == count)
+                        return true;
 				}
 			}
 		}
@@ -659,6 +684,19 @@ unsigned int structure_cours::get_biggest_level()
 	}
 	//std::cout<<" max = "<<max <<std::endl;
 	return max;
+}
+
+bool structure_cours::get_cell_value( ods::Sheet * sheet, const place & p, double * out)
+{
+    auto * row = sheet->row(p.row);
+    auto* cell = row->cell(p.col);
+    const ods::Value &value =  cell->value();
+    if (value.IsDouble())
+    {
+        *out =  *value.AsDouble();
+        return true;
+    }
+    return false;
 }
 
 matiere* structure_cours::get_master_of_tree()
@@ -724,6 +762,15 @@ void structure_cours::print_students()
     }
 }
 
+void structure_cours::print_students_name()
+{
+    for (int i=0;i<liste_etudiant.size();i++)
+    {
+        std::cout<<liste_etudiant[i].name_.toStdString()<<" ";
+    }
+    std::cout<<std::endl;
+}
+
 void structure_cours::print_profs()
 {
     for (int i=0;i<liste_profs.size();i++)
@@ -739,6 +786,60 @@ void structure_cours::print_tree()
     else{
         std::cerr<<" Error the tree is not defined yet"<<std::endl;
         exit(0);
+    }
+}
+
+void structure_cours::read_ods()
+{
+//    std::cout<<" Read ods"<<std::endl;
+    std::string command = "cp "+output_.toStdString()+".ods mem_ods/" + output_.toStdString() +"_"+currentDateTime()+".ods";
+    int dummy = system(command.c_str());
+
+	QFile file(output_+".ods");
+	if (!file.exists())
+	{
+		qDebug() << "No such file: " << output_+".ods";
+		return;
+	}
+	ods::Book book_in(output_+".ods");
+
+	for (int i=0;i<liste_etudiant.size();i++)
+    {
+        student &e = liste_etudiant[i];
+        // std::cout<<"Reading info on student "<< e.name_.toStdString() <<std::endl;
+        for (int j=0;j<liste_cours.size();j++)
+        {
+            matiere &m = liste_cours[j];
+            read_notes( e, m, book_in);
+        }
+    }
+}
+
+void structure_cours::read_notes(student &e , matiere & m, ods::Book & book_in)
+{
+    // std::cout<<" j = "<<j<<" / "<< liste_cours.size()<< " m alias  "<<  m.alias_.toStdString()<<"  option = "<< m.option_.toStdString()<<" "<< e.option_.toStdString()<<std::endl;
+    if ( (m.option_ == "all" || m.option_ == e.option_ ) && m.dep_matiere_.size() == 0)
+    {
+        // std::cout<<" Searching for cell of "<< m.alias_.toStdString()<<std::endl;
+        auto *sheet = book_in.sheet(m.alias_);
+        int c,r;
+        if ( !find_cell(&c,&r, e.name_,m.alias_,sheet))
+        {
+            std::cerr<<"Cannot find the student "<< e.name_.toStdString()<<" in "<< m.alias_.toStdString()<<std::endl;
+            exit(0);
+        }
+
+        place p;
+        p.col = c;
+        p.row = r;
+
+        note n;
+        n.name = m.alias_;
+        n.sheet = sheet;
+        n.cell = p;
+        n.defined = get_cell_value( sheet, p, & (n.value));
+        // std::cout<<" value = "<< n.value<<std::endl;
+        e.notes_.push_back(n);
     }
 }
 
@@ -765,7 +866,12 @@ bool structure_cours::read_project()
 	QDomElement root = document.firstChildElement();
 	QDomElement cours = root.namedItem("cours").toElement();
 	cours_xml_ = cours.text().trimmed();
-	qDebug()<<" cours_xml_ ="<< cours_xml_;
+
+	QDomElement students = root.namedItem("students").toElement();
+	student_ods_ = students.text().trimmed();
+
+    QDomElement output = root.namedItem("output").toElement();
+	output_ = output.text().trimmed();
 
 	QDomElement referent = root.namedItem("referent").toElement();
 	referent_ ="";
@@ -786,18 +892,18 @@ bool structure_cours::read_project()
     }
     if(email_=="")
     {
-        std::cerr<<"Please edit the file " << PROJECT_NAME<<" and add the email of the referent"<<std::endl;
+        std::cerr<<"Please edit the file " << PROJECT_NAME<<" and add the email of the referent. found = "<< email_.toStdString()<<std::endl;
         exit(0);
     }
-
-
 	read_xml(cours_xml_);
+	read_student(student_ods_);
+	read_ods();
 	return true;
 }
 
 void structure_cours::read_student(QString ods_file)
 {
-	std::cout<<"Start to read the student file."<<std::endl;
+//	std::cout<<"Start to read the student file."<<std::endl;
 	/// read a file
 
 	int nom_col, nom_row;
@@ -822,7 +928,7 @@ void structure_cours::read_student(QString ods_file)
     }
 
     find_option = find_cell( &option_col, &option_row, "OPTION",ods_file) || find_cell( &option_col, &option_row, "option",ods_file) || find_cell( &option_col, &option_row, "Option",ods_file);;
-    //std::cout<<" find_option = "<< find_option <<std::endl;
+//    std::cout<<" find_option = "<< find_option << "  option_col = "<< option_col<<std::endl;
 	QFile file(ods_file);
 	if (!file.exists())
 	{
@@ -866,24 +972,24 @@ void structure_cours::read_student(QString ods_file)
 			tmp.name_ = *value1.AsString();
 			tmp.first_name_ = *value2.AsString();
 			tmp.email_ = *value3.AsString();
+			tmp.option_ = "not_defined";
 			if (find_option)
             {
                 const ods::Value &value4 = cell_option->value();
                 if( !value4.NoValue())
                     tmp.option_ = *value4.AsString();
             }
-
-			qDebug()<<tmp.name_ << tmp.first_name_ << tmp.email_;
+			// qDebug()<<tmp.name_ << tmp.first_name_ << tmp.email_;
 			liste_etudiant.push_back(tmp);
 		}
 		current_row = sheet_in->row(nom_row++);
 	}
-	std::cout<<"il y a "<< nb_etu <<" etudiants"<<std::endl;
+//	std::cout<<"il y a "<< nb_etu <<" etudiants"<<std::endl;
 }
 
 void structure_cours::read_xml( QString input)
 {
-	qDebug().nospace()<<" reading "<< input;
+//	qDebug().nospace()<<" reading "<< input;
 	QDomDocument document;
 	QFile file(input);
 
@@ -1053,6 +1159,30 @@ void structure_cours::send_mail_profs()
         for (int j=0;j<liste_profs[i].matieres_.size();j++)
             outfile << " -a ./notes/"<< liste_profs[i].matieres_[j]->alias_.toStdString()<<".ods";
         outfile<<"  "<<std::endl<<std::endl;
+    }
+    outfile.close();
+}
+
+void structure_cours::send_mail_student(QString & name)
+{
+    std::ofstream outfile ("send_mail_student.sh");
+    for (int i = 0;i<liste_etudiant.size();i++)
+    {
+        if (liste_etudiant[i].name_ == name)
+        {
+            liste_etudiant[i].mail_notes(outfile, referent_, email_);
+            break;
+        }
+    }
+    outfile.close();
+}
+
+void structure_cours::send_mail_students( )
+{
+    std::ofstream outfile ("send_mail_student.sh");
+    for (int i = 0;i<liste_etudiant.size();i++)
+    {
+        liste_etudiant[i].mail_notes(outfile, referent_, email_);
     }
     outfile.close();
 }

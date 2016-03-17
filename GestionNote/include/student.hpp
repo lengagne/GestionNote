@@ -4,6 +4,8 @@
 #include <iostream>
 #include "util.hpp"
 #include <QtXml>
+#include <iostream>
+#include <fstream>
 
 typedef struct{
     int row;
@@ -16,9 +18,8 @@ typedef struct
     ods::Sheet *sheet;
     place cell ;
     double value;
-    bool defined_;
+    bool defined;
 }note;
-
 
 class student{
 public:
@@ -31,6 +32,8 @@ public:
     ods::Sheet* get_dep_sheet(const QString& name);
 
     place get_dep_cell(const QString& name);
+
+    void mail_notes(std::ofstream & outfile, QString & referent, QString & email_referent);
 
     void set_cell(const place& p ,
                   ods::Sheet * s,
@@ -48,6 +51,5 @@ public:
     std::vector<note> notes_;
 
 };
-
 
 #endif

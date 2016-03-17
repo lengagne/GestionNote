@@ -20,6 +20,7 @@
 #include <iostream>
 #include <string>
 #include <QtXml>
+#include "structure_cours.hpp"
 
 int main(int argc, char* argv[])
 {
@@ -31,7 +32,7 @@ int main(int argc, char* argv[])
 	}
 	if (argc == 2)
     {
-        std::cout<<"help new show_tree_lesson show_students show_prof send_mail_all_profs"<<std::endl;
+        std::cout<<"help new show_tree_lesson show_students show_prof send_mail_all_profs send_mail_all_students send_mail_student "<<std::endl;
     }else if (argc ==3)
     {
         QString command(argv[1]);
@@ -44,6 +45,11 @@ int main(int argc, char* argv[])
         }else if(command == "new")
         {
             std::cout<<" file: xml"<<std::endl;
+        }else if(command == "send_mail_student")
+        {
+            structure_cours cours;
+            cours.read_project();
+            cours.print_students_name();
         }
     }else if (argc ==4)
     {

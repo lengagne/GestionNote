@@ -44,6 +44,25 @@ place student::get_dep_cell(const QString& name)
     return out;
 }
 
+void student::mail_notes(std::ofstream & outfile, QString & referent, QString & referent_email)
+{
+    outfile << "echo \"Bonjour "<<first_name_.toStdString()<<" "<< name_.toStdString()<<", \n \n";
+    outfile <<"Je vous joins l'état actuels de vos notes \n";
+    for (int j=0;j<notes_.size();j++)   if (notes_[j].defined)
+    {
+        outfile << notes_[j].name.toStdString()<<" : "<< notes_[j].value <<" \\n";
+    }
+
+    outfile <<"\n \n Bonne journée \n";
+    outfile << referent.toStdString() <<"\n \n";
+    outfile <<"---- Mail généré automatiquement par GestionNote :  https://github.com/lengagne/GestionNote ---\n ";
+    outfile << " \" | mutt ";
+    outfile<<" -s \"[GE4A] Fichier pour notes GE4A\" -c "<<referent_email.toStdString() <<" "<< email_.toStdString()<<" ";
+
+    outfile<<"  "<<std::endl<<std::endl;
+}
+
+
 void student::set_cell( const place& p ,
                         ods::Sheet * s,
                         QString name)

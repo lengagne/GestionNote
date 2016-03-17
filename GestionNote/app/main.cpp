@@ -64,6 +64,19 @@ int main(int argc, char *argv[])
             cours.read_project();
             cours.send_mail_profs();
             return 1;
+        }else if (command =="show_students")
+        {
+            QString file(argv[2]);
+            structure_cours cours;
+            cours.read_project();
+            cours.print_students_name();
+            return 1;
+        }else if (command =="send_mail_all_students")
+        {
+            structure_cours cours;
+            cours.read_project();
+            cours.send_mail_students( );
+            return 1;
         }
     }else if (argc == 3)
     {
@@ -90,6 +103,13 @@ int main(int argc, char *argv[])
             structure_cours cours;
             cours.read_xml(file);
             cours.print_profs();
+            return 1;
+        }else if (command =="send_mail_student")
+        {
+            QString student(argv[2]);
+            structure_cours cours;
+            cours.read_project();
+            cours.send_mail_student(student);
             return 1;
         }
     }else if (argc==4)
