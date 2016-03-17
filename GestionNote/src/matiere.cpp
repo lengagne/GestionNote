@@ -34,20 +34,20 @@ unsigned int matiere::update_col(unsigned int c)
 {
 
     col_debut_ = c;
-    std::cout<<"\tdebut matiere = "<< alias_.toStdString()<<"\t deb = "<< col_debut_<<"\t fin = "<< col_fin_<<"\t\tc= "<< c<<"\t size = "<< dep_matiere_.size()<<std::endl;
+//    std::cout<<"\tdebut matiere = "<< alias_.toStdString()<<"\t deb = "<< col_debut_<<"\t fin = "<< col_fin_<<"\t\tc= "<< c<<"\t size = "<< dep_matiere_.size()<<std::endl;
     for (int i=0;i<dep_matiere_.size();i++)
     {
-        if(dep_matiere_[i]->dads_.size() > 0)qDebug()<<dep_matiere_[i]->dads_[0]->alias_  <<" == "<< alias_;
+        // if(dep_matiere_[i]->dads_.size() > 0)qDebug()<<dep_matiere_[i]->dads_[0]->alias_  <<" == "<< alias_;
 
         if(dep_matiere_[i]->dads_.size() > 0 && dep_matiere_[i]->dads_[0]->alias_ == alias_)
         {
-            std::cout<<"Dans le if"<<std::endl;
+//            std::cout<<"Dans le if"<<std::endl;
             if (dep_matiere_[i]->col_debut_== -1)
                 c = dep_matiere_[i]->update_col(c+1) ;
         }
     }
     col_fin_ = c;
-    std::cout<<"\tfin  matiere = "<< alias_.toStdString()<<"\t deb = "<< col_debut_<<"\t fin = "<< col_fin_<<"\t\tc= "<< c<<std::endl;
+//    std::cout<<"\tfin  matiere = "<< alias_.toStdString()<<"\t deb = "<< col_debut_<<"\t fin = "<< col_fin_<<"\t\tc= "<< c<<std::endl;
     return col_fin_;
 }
 

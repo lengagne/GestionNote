@@ -1,7 +1,4 @@
 #include "structure_cours.hpp"
-#define START_LINE 5
-#define START_COL 5
-
 #define PROJECT_NAME "GestionNoteProject.xml"
 
 structure_cours::structure_cours()
@@ -17,16 +14,14 @@ structure_cours::~structure_cours()
 
 void structure_cours::add_main_sheet_line( ods::Book& book, matiere * tree, ods::Row * row, int level, ods::Cell* previous)
 {
-    qDebug()<<"La matiere "<< tree->alias_<<" a "<< tree->dads_.size()<<" parents";
+//    qDebug()<<"La matiere "<< tree->alias_<<" a "<< tree->dads_.size()<<" parents";
 	auto *style = book.CreateCellStyle();
 	style->SetBold(true);
 	style->SetHAlignment(ods::HAlign::Center);
-//	style->SetBackgroundColor(QColor(255,255,0,100));
-
     auto *border = new ods::style::Border();
 
 
-    std::cout<<  tree->alias_.toStdString() <<" cellule de début = "<< tree->col_debut_<<std::endl;
+//    std::cout<<  tree->alias_.toStdString() <<" cellule de début = "<< tree->col_debut_<<std::endl;
     ods::Cell * cell;
 
     if (tree->tree_level_ < level)
@@ -38,7 +33,7 @@ void structure_cours::add_main_sheet_line( ods::Book& book, matiere * tree, ods:
 
         style->SetBorder(border);
         cell = row->CreateCell(tree->col_debut_);
-        std::cout<<tree->alias_.toStdString()<<"  une seule cellule "<< tree->col_debut_ <<std::endl;
+//        std::cout<<tree->alias_.toStdString()<<"  une seule cellule "<< tree->col_debut_ <<std::endl;
         cell->SetValue( tree->alias_);
         cell->SetStyle(style);
     }else if (tree->tree_level_ == level)
@@ -51,12 +46,12 @@ void structure_cours::add_main_sheet_line( ods::Book& book, matiere * tree, ods:
         style->SetBorder(border);
 
         cell = row->CreateCell(tree->col_debut_);
-        std::cout<<tree->alias_.toStdString()<<"  plusieurs cellules "<< tree->get_nb_dep() <<std::endl;
+//        std::cout<<tree->alias_.toStdString()<<"  plusieurs cellules "<< tree->get_nb_dep() <<std::endl;
         //if (tree->alias_ == "MIE")
 //            cell->SetRowColSpan(1, 2);
         if (tree->col_fin_ - tree->col_debut_ > 0)
         {
-            std::cout<<"We expand cell for "<< tree->alias_.toStdString()<<std::endl;
+//            std::cout<<"We expand cell for "<< tree->alias_.toStdString()<<std::endl;
             cell->SetRowColSpan(1, tree->col_fin_ - tree->col_debut_+1);
         }
 
@@ -70,8 +65,7 @@ void structure_cours::add_main_sheet_line( ods::Book& book, matiere * tree, ods:
         if ( tree->dep_matiere_[i]->dads_.size()>0 && tree->dep_matiere_[i]->dads_[0]->alias_ == tree->alias_)
             add_main_sheet_line(book, tree->dep_matiere_[i],row,level,cell);
     }
-    std::cout<<  tree->alias_.toStdString() <<" cellule de fin = "<< tree->col_fin_<<std::endl;
-
+//    std::cout<<  tree->alias_.toStdString() <<" cellule de fin = "<< tree->col_fin_<<std::endl;
 }
 
 void structure_cours::create_project( const QString & cours_xml,
@@ -155,25 +149,6 @@ void structure_cours::create_files()
                 qDebug() << "Saved to" << target.fileName();
         }
     }
-
-
-/*	// create prof files
-	for (int i=0;i<liste_prof.size();i++)
-	{
-		ods::Book book;
-		for (int j=0;j<liste_prof[i].matiere.size();j++)
-			ods::Sheet *sheet = book.CreateSheet(liste_prof[i].matiere[j]);
-
-
-		auto path = liste_prof[i].nom + ".ods";
-		QFile target(path);
-		QString err = book.Save(target);
-		if (!err.isEmpty())
-			qDebug() << "Error saving ods file:" << err;
-		else
-			qDebug() << "Saved to" << target.fileName();
-	}
-*/
 }
 
 void structure_cours::create_main_sheet(  ods::Book& book)
@@ -743,6 +718,14 @@ void structure_cours::print_students()
     }
 }
 
+void structure_cours::print_profs()
+{
+    for (int i=0;i<liste_profs.size();i++)
+    {
+        liste_profs[i].print();
+    }
+}
+
 void structure_cours::print_tree()
 {
     if (tree_matiere_)
@@ -1014,6 +997,66 @@ void structure_cours::read_xml( QString input)
 	tree_matiere_->update_dads();
 	tree_matiere_->update_level();
 	tree_matiere_->update_col(3);
+
+	QDomNodeList prof_node = root.elementsByTagName("prof");
+	for(int i = 0; i < prof_node.count(); i++)
+	{
+		QDomNode elm = prof_node.at(i);
+		if(elm.isElement())
+		{
+			profs next_prof;
+			// lecture du nom
+			QDomElement name = elm.namedItem("nom").toElement();
+			if ( !name.isNull() ) { // We have a <name>..</name> element in the set
+				next_prof.name_ = name.text().trimmed();
+			}else
+			{
+				std::cerr<<"nom not found for prof"<<std::endl;
+				exit(0);
+			}
+// 			qDebug() << new_cours.nom;
+
+			QDomElement first_name = elm.namedItem("prenom").toElement();
+			if ( !first_name.isNull() ) { // We have a <name>..</name> element in the set
+				next_prof.first_name_ = first_name.text().trimmed();
+			}else
+			{
+				std::cerr<<"prenom not found for prof"<<std::endl;
+				exit(0);
+			}
+
+			QDomElement email = elm.namedItem("email").toElement();
+			if ( !email.isNull() ) { // We have a <name>..</name> element in the set
+				next_prof.email_ = email.text().trimmed();
+// 				qDebug() <<"responsable = "<< responsable.text().trimmed();
+			}else
+			{
+				std::cerr<<"email not found for prof"<<std::endl;
+				exit(0);
+			}
+			liste_profs.push_back(next_prof);
+		}
+	}
+
+    for (int i=0;i<liste_cours.size();i++)
+    {
+        if (liste_cours[i].dep_matiere_.size() == 0)
+        {
+            bool found = false;
+            for (int j=0;j<liste_profs.size();j++)
+                if( liste_cours[i].referent_ == liste_profs[j].name_)
+                {
+                    found = true;
+                    liste_profs[j].matieres_.push_back(& liste_cours[i]);
+                    break;
+                }
+            if(!found)
+            {
+                std::cerr<<" Error cannot find the definition of profs "<< liste_cours[i].referent_.toStdString()<<" for "<<  liste_cours[i].alias_.toStdString()<<std::endl;
+                exit(0);
+            }
+        }
+    }
 
 }
 

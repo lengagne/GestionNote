@@ -5,7 +5,7 @@
 #include "util.hpp"
 #include <QtXml>
 #include "Item.hpp"
-#include "matiere.hpp"
+#include "profs.hpp"
 #include "student.hpp"
 #include <ods/ods>
 
@@ -22,6 +22,8 @@ public:
     void create_project( const QString & cours_xml,
                          const QString& student_ods,
                          const QString& output = "GestionNoteOutput");
+
+    void print_profs();
 
     void print_students();
 
@@ -50,8 +52,6 @@ private:
 
 	unsigned int get_biggest_level();
 
-
-
     // tries to read a project else recommend to create one
 
 
@@ -63,6 +63,7 @@ private:
 
 private:
 	std::vector<matiere> liste_cours;
+	std::vector<profs> liste_profs;
 	std::vector<student> liste_etudiant;
 	matiere* tree_matiere_;
 

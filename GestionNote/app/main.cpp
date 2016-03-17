@@ -30,23 +30,25 @@
 #include <QtCore>
 #include <iostream>
 
+// TODO : envoie par email des fichiers vides aux profs concernés
+// TODO : import des notes depuis les fichiers dans le ods général
+// TODO : envoie des notes aux étudiants (par matière et/ou global)
+// TODO : gérer les couleurs en cas de choses non validées
+// TODO : ajouter case pour points jury
+
 void print_help()
 {
 	std::cout<<"aide"<<std::endl;
-//	std::cout<<"générer fichier note :    GestionNote create_files liste_etudiants.ods liste_enseignements.xml"<<std::endl;
-//	std::cout<<"générer fichier note :    GestionNote import liste_enseignements.xml main.ods responsable.ods"<<std::endl;
 	std::cout<<"afficher arborescence cours :    GestionNote show_tree_lesson *.xml "<<std::endl;
 	std::cout<<"afficher etudiant :    GestionNote show_students *.ods "<<std::endl;
+	std::cout<<"afficher proffesseur :    GestionNote show_prof *.xml "<<std::endl;
+	std::cout<<"Créer nouveau projet :  GestionNote new lessons.xml student.ods output"<<std::endl;
 
 }
 
 int main(int argc, char *argv[])
 {
 	QCoreApplication app(argc, argv);
-
-//	qDebug().nospace() << "QOds version: " << ods::version_major() << "." << ods::version_minor() << "." << ods::version_micro();
-
-	//std::cout<<"il y a "<< argc <<" paramètres" <<std::endl;
 
     if (argc == 2)
     {
@@ -59,9 +61,9 @@ int main(int argc, char *argv[])
     }else if (argc == 3)
     {
         QString command(argv[1]);
+        qDebug()<<" command = "<< command;
         if (command =="show_tree_lesson")
         {
-            std::cout<<" youhouhou"<<std::endl;
             QString file(argv[2]);
             structure_cours cours;
             cours.read_xml(file);
@@ -74,6 +76,13 @@ int main(int argc, char *argv[])
             structure_cours cours;
             cours.read_student(file);
             cours.print_students();
+            return 1;
+        }else if (command =="show_prof")
+        {
+            QString file(argv[2]);
+            structure_cours cours;
+            cours.read_xml(file);
+            cours.print_profs();
             return 1;
         }
     }else if (argc==4)
@@ -91,21 +100,6 @@ int main(int argc, char *argv[])
 
 			return 1;
 		}
-
-
-/*		if (command == "create_files")
-		{
-			QString ods(argv[2]);
-			QString xml(argv[3]);
-			app::sample toto;
-
-			structure_cours cours;
-			cours.read_xml(xml);
-			cours.read_student(ods);
-			cours.create_file();
-
-			return 1;
-		}*/
     }else if (argc==5)
 	{
 		QString command(argv[1]);
@@ -124,8 +118,6 @@ int main(int argc, char *argv[])
 		}
 	}
 	print_help();
-
-
 	return 0;
 }
 

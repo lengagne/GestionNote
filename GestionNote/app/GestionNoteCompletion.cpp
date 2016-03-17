@@ -31,11 +31,11 @@ int main(int argc, char* argv[])
 	}
 	if (argc == 2)
     {
-        std::cout<<"help new show_tree_lesson show_students"<<std::endl;
+        std::cout<<"help new show_tree_lesson show_students show_prof"<<std::endl;
     }else if (argc ==3)
     {
         QString command(argv[1]);
-        if(command == "show_tree_lesson")
+        if(command == "show_tree_lesson" || command == "show_prof")
         {
             std::cout<<"file: xml"<<std::endl;
         }else if(command == "show_students")
