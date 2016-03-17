@@ -755,6 +755,49 @@ matiere* structure_cours::get_master_of_tree()
     return &liste_cours[id];
 }
 
+void structure_cours::import_note(QString& alias_matiere)
+{
+    std::ofstream outfile ("send_mail_student.sh");
+	auto path = output_ + ".ods";
+	QFile target(path);
+    ods::Book book_in(path);
+    ods::Book book("./notes/"+alias_matiere+".ods");
+    auto *sheet = book.sheet(0);
+    for (int i=0;i<liste_etudiant.size();i++)   if(liste_etudiant[i].get_dep(alias_matiere))
+    {
+        double note_value = 0;
+        int c,r;
+        find_cell(&c,&r,liste_etudiant[i].name_,alias_matiere, sheet);
+        place p;
+        p.col = c;
+        p.row = r;
+        if( !get_cell_value( sheet, p, &note_value))
+        {
+            std::cerr<<"Cannot find student "<< liste_etudiant[i].name_.toStdString() <<" in "<< alias_matiere.toStdString()<<std::endl;
+            exit(0);
+        }
+        std::cout<<"La note de "<< alias_matiere.toStdString()<<" de "<< liste_etudiant[i].name_.toStdString()<<" est de "<< note_value<<std::endl;
+
+        set_notes( liste_etudiant[i], alias_matiere, book_in,note_value);
+        std::string sentence = "Vous avez obtenu la note de "+ std::to_string(note_value) + " en "+alias_matiere.toStdString()+".";
+        liste_etudiant[i].mail_notes(outfile, referent_, email_,tree_matiere_,sentence);
+    }
+    QString err = book_in.Save(target);
+	if (!err.isEmpty())
+		qDebug() << "Error saving ods file:" << err;
+	else
+		qDebug() << "Saved to" << target.fileName();
+
+    outfile.close();
+}
+
+void structure_cours::print_cours()
+{
+    for (int i=0;i<liste_cours.size();i++)  if(liste_cours[i].dep_matiere_.size() == 0)
+        std::cout<<" "<< liste_cours[i].alias_.toStdString();
+    std::cout<<std::endl;
+}
+
 void structure_cours::print_students()
 {
     for (int i=0;i<liste_etudiant.size();i++)
@@ -1178,13 +1221,34 @@ void structure_cours::send_mail_student(QString & name)
     outfile.close();
 }
 
-void structure_cours::send_mail_students( )
+void structure_cours::send_mail_students( const std::string & alias)
 {
     std::ofstream outfile ("send_mail_student.sh");
-    for (int i = 0;i<liste_etudiant.size();i++)
+    for (int i = 0;i<liste_etudiant.size();i++) if (liste_etudiant[i].get_dep(QString::fromUtf8(alias.c_str())))
     {
-        liste_etudiant[i].mail_notes(outfile, referent_, email_, tree_matiere_);
+        liste_etudiant[i].mail_notes(outfile, referent_, email_, tree_matiere_, alias);
     }
     outfile.close();
 }
 
+void structure_cours::set_notes(student &e , QString &alias, ods::Book & book_in, double note_value)
+{
+    // std::cout<<" Searching for cell of "<< m.alias_.toStdString()<<std::endl;
+    auto *sheet = book_in.sheet(alias);
+    int c,r;
+    if ( !find_cell(&c,&r, e.name_,alias,sheet))
+    {
+        std::cerr<<"Cannot find the student "<< e.name_.toStdString()<<" in "<< alias.toStdString()<<std::endl;
+        exit(0);
+    }
+
+    for (int i=0;i<e.notes_.size();i++) if(e.notes_[i].name == alias)
+    {
+        e.notes_[i].value = note_value;
+        e.notes_[i].defined = true;
+        break;
+    }
+    auto* row = sheet->row(r);
+    auto* cell = row->cell(c);
+    cell->SetValue(note_value);
+}

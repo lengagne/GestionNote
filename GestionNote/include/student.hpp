@@ -31,11 +31,13 @@ public:
 
     bool get_dep(const QString& name);
 
+    double get_note(const QString& name);
+
     ods::Sheet* get_dep_sheet(const QString& name);
 
     place get_dep_cell(const QString& name);
 
-    void mail_notes(std::ofstream & outfile, QString & referent, QString & email_referent, matiere * tree);
+    void mail_notes(std::ofstream & outfile, QString & referent, QString & email_referent, matiere * tree, const std::string& sentence="");
 
     void write_mail_notes(std::ofstream & outfile, matiere * tree, std::string offset="");
 

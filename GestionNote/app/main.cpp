@@ -45,6 +45,7 @@ void print_help()
 	std::cout<<"Préparer mail aux professeurs :    GestionNote send_mail_all_profs "<<std::endl;
 	std::cout<<"Préparer mail aux étudiants : GestionNote send_mail_all_students"<<std::endl;
 	std::cout<<"Préparer mail à un étudiant : GestionNote send_mail_student student_name"<<std::endl;
+	std::cout<<"Importer notes :  GestionNote import_note note_alias"<<std::endl;
 	std::cout<<"Créer nouveau projet :  GestionNote new lessons.xml student.ods output"<<std::endl;
 
 }
@@ -112,6 +113,16 @@ int main(int argc, char *argv[])
             structure_cours cours;
             cours.read_project();
             cours.send_mail_student(student);
+            return 1;
+        }else if (command =="import_note")
+        {
+            QString matiere(argv[2]);
+            structure_cours cours;
+            cours.read_project();
+            cours.import_note(matiere);
+            structure_cours cours2;
+            cours2.read_project();
+            cours2.send_mail_students( matiere.toStdString() );
             return 1;
         }
     }else if (argc==4)

@@ -23,6 +23,10 @@ public:
                          const QString& student_ods,
                          const QString& output = "GestionNoteOutput");
 
+    void import_note(QString& alias_matiere);
+
+    void print_cours();
+
     void print_profs();
 
     void print_students();
@@ -45,7 +49,9 @@ public:
 
 	void send_mail_student(QString & name);
 
-	void send_mail_students( );
+	void send_mail_students(const std::string & alias = "");
+
+    void set_notes(student &e , QString & m, ods::Book& book_in, double note_value);
 
 private:
 

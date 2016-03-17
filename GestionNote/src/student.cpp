@@ -27,6 +27,14 @@ bool student::get_dep(const QString& name)
     return false;
 }
 
+double student::get_note(const QString& name)
+{
+    for (int i=0;i<notes_.size();i++)
+        if (notes_[i].name == name)
+            return notes_[i].value;
+    return 0.0;
+}
+
 ods::Sheet* student::get_dep_sheet(const QString& name)
 {
     for (int i=0;i<notes_.size();i++)
@@ -44,10 +52,16 @@ place student::get_dep_cell(const QString& name)
     return out;
 }
 
-void student::mail_notes(std::ofstream & outfile, QString & referent, QString & referent_email, matiere* tree)
+void student::mail_notes(std::ofstream & outfile, QString & referent, QString & referent_email, matiere* tree, const std::string& alias)
 {
     outfile << "echo \"Bonjour "<<first_name_.toStdString()<<" "<< name_.toStdString()<<", \n \n";
-    outfile <<"Je vous joins l'état actuels de vos notes \n";
+    if (alias !="")
+    {
+        outfile <<"\nJe viens de recevoir les notes de "<<alias<<". Vous avez obtenus : "<< get_note( QString::fromUtf8(alias.c_str()))<<" \n";
+    }
+
+
+    outfile <<"Je vous joins l'état actuel de vos notes \n";
     write_mail_notes(outfile, tree,"");
 
     outfile <<"\n \n Bonne journée \n";
