@@ -696,6 +696,7 @@ bool structure_cours::get_cell_value( ods::Sheet * sheet, const place & p, doubl
         *out =  *value.AsDouble();
         return true;
     }
+    *out = 0;
     return false;
 }
 
@@ -818,7 +819,7 @@ void structure_cours::read_ods()
 void structure_cours::read_notes(student &e , matiere & m, ods::Book & book_in)
 {
     // std::cout<<" j = "<<j<<" / "<< liste_cours.size()<< " m alias  "<<  m.alias_.toStdString()<<"  option = "<< m.option_.toStdString()<<" "<< e.option_.toStdString()<<std::endl;
-    if ( (m.option_ == "all" || m.option_ == e.option_ ) && m.dep_matiere_.size() == 0)
+    if ( m.option_ == "all" || m.option_ == e.option_ ) // )&& m.dep_matiere_.size() == 0)
     {
         // std::cout<<" Searching for cell of "<< m.alias_.toStdString()<<std::endl;
         auto *sheet = book_in.sheet(m.alias_);
@@ -1170,7 +1171,7 @@ void structure_cours::send_mail_student(QString & name)
     {
         if (liste_etudiant[i].name_ == name)
         {
-            liste_etudiant[i].mail_notes(outfile, referent_, email_);
+            liste_etudiant[i].mail_notes(outfile, referent_, email_,tree_matiere_);
             break;
         }
     }
@@ -1182,7 +1183,7 @@ void structure_cours::send_mail_students( )
     std::ofstream outfile ("send_mail_student.sh");
     for (int i = 0;i<liste_etudiant.size();i++)
     {
-        liste_etudiant[i].mail_notes(outfile, referent_, email_);
+        liste_etudiant[i].mail_notes(outfile, referent_, email_, tree_matiere_);
     }
     outfile.close();
 }

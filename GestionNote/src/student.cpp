@@ -44,14 +44,11 @@ place student::get_dep_cell(const QString& name)
     return out;
 }
 
-void student::mail_notes(std::ofstream & outfile, QString & referent, QString & referent_email)
+void student::mail_notes(std::ofstream & outfile, QString & referent, QString & referent_email, matiere* tree)
 {
     outfile << "echo \"Bonjour "<<first_name_.toStdString()<<" "<< name_.toStdString()<<", \n \n";
     outfile <<"Je vous joins l'état actuels de vos notes \n";
-    for (int j=0;j<notes_.size();j++)   if (notes_[j].defined)
-    {
-        outfile << notes_[j].name.toStdString()<<" : "<< notes_[j].value <<" \\n";
-    }
+    write_mail_notes(outfile, tree,"");
 
     outfile <<"\n \n Bonne journée \n";
     outfile << referent.toStdString() <<"\n \n";
@@ -62,6 +59,17 @@ void student::mail_notes(std::ofstream & outfile, QString & referent, QString & 
     outfile<<"  "<<std::endl<<std::endl;
 }
 
+void student::write_mail_notes(std::ofstream & outfile, matiere * tree, std::string offset)
+{
+    for (int j=0;j<notes_.size();j++)   if (notes_[j].name == tree->alias_)
+    {
+        outfile << offset << notes_[j].name.toStdString()<<" : "<< notes_[j].value <<" \\n";
+    }
+    for (int i=0;i<tree->dep_matiere_.size();i++)
+    {
+        write_mail_notes(outfile,tree->dep_matiere_[i],offset+"\t");
+    }
+}
 
 void student::set_cell( const place& p ,
                         ods::Sheet * s,

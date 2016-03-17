@@ -7,6 +7,8 @@
 #include <iostream>
 #include <fstream>
 
+#include "matiere.hpp"
+
 typedef struct{
     int row;
     int col;
@@ -33,7 +35,10 @@ public:
 
     place get_dep_cell(const QString& name);
 
-    void mail_notes(std::ofstream & outfile, QString & referent, QString & email_referent);
+    void mail_notes(std::ofstream & outfile, QString & referent, QString & email_referent, matiere * tree);
+
+    void write_mail_notes(std::ofstream & outfile, matiere * tree, std::string offset="");
+
 
     void set_cell(const place& p ,
                   ods::Sheet * s,

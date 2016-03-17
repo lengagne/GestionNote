@@ -42,7 +42,9 @@ void print_help()
 	std::cout<<"afficher arborescence cours :    GestionNote show_tree_lesson *.xml "<<std::endl;
 	std::cout<<"afficher etudiant :    GestionNote show_students *.ods "<<std::endl;
 	std::cout<<"afficher professeur :    GestionNote show_prof *.xml "<<std::endl;
-	std::cout<<"afficher professeur :    GestionNote send_mail_all_profs "<<std::endl;
+	std::cout<<"Préparer mail aux professeurs :    GestionNote send_mail_all_profs "<<std::endl;
+	std::cout<<"Préparer mail aux étudiants : GestionNote send_mail_all_students"<<std::endl;
+	std::cout<<"Préparer mail à un étudiant : GestionNote send_mail_student student_name"<<std::endl;
 	std::cout<<"Créer nouveau projet :  GestionNote new lessons.xml student.ods output"<<std::endl;
 
 }
