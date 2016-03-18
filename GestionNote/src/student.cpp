@@ -57,14 +57,12 @@ void student::mail_notes(std::ofstream & outfile, QString & referent, QString & 
     outfile << "echo \"Bonjour "<<first_name_.toStdString()<<" "<< name_.toStdString()<<", \n \n";
     if (alias !="")
     {
-        outfile <<"\nJe viens de recevoir les notes de "<<alias<<". Vous avez obtenus : "<< get_note( QString::fromUtf8(alias.c_str()))<<" \n";
+        outfile <<"\nJe viens de recevoir les notes de "<<alias<<". Vous avez obtenu : "<< get_note( QString::fromUtf8(alias.c_str()))<<" \n";
     }
-
-
     outfile <<"Je vous joins l'état actuel de vos notes \n";
     write_mail_notes(outfile, tree,"");
 
-    outfile <<"\n \n Bonne journée \n";
+    outfile <<"\n \nBonne journée \n";
     outfile << referent.toStdString() <<"\n \n";
     outfile <<"---- Mail généré automatiquement par GestionNote :  https://github.com/lengagne/GestionNote ---\n ";
     outfile << " \" | mutt ";

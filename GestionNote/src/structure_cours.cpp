@@ -243,6 +243,9 @@ void structure_cours::create_main_sheet(  ods::Book& book)
                 formula1->Add(sheet_dep, cell_dep );
                 cell->SetFormula(formula1);
                 cell->SetStyle(style_center);
+            }else
+            {
+                cell->SetValue(" ");
             }
         }
     }
@@ -451,7 +454,9 @@ void structure_cours::create_sub_sheet(ods::Book & book, matiere * m )
                         formula->Add(cell_value);
                     }else
                     {
-                        row->CreateCell(4+k);
+                        ods::Cell* cell = row->CreateCell(4+k);
+                        cell->SetValue(" ");
+
                     }
                 formula->Add(ods::Grouping::Close);
                 formula->Add(ods::Op::Divide);
@@ -688,13 +693,30 @@ unsigned int structure_cours::get_biggest_level()
 
 bool structure_cours::get_cell_value( ods::Sheet * sheet, const place & p, double * out)
 {
+//    std::cout<<" row = "<<p.row<<"  col = "<< p.col<<std::endl;
     auto * row = sheet->row(p.row);
     auto* cell = row->cell(p.col);
-    const ods::Value &value =  cell->value();
-    if (value.IsDouble())
+
+    if (cell->HasFormula())
     {
-        *out =  *value.AsDouble();
-        return true;
+        auto* f = cell->formula();
+        f->UpdateValue();
+        const auto &value = cell->value();
+        //std::cout<<" read formula value ="<<*value.AsDouble()<<std::endl;
+        if (value.IsDouble())
+        {
+            *out =  *value.AsDouble();
+            return true;
+        }
+    }
+    {
+        const ods::Value &value =  cell->value();
+        if (value.IsDouble())
+        {
+         //   std::cout<<" read value"<<std::endl;
+            *out =  *value.AsDouble();
+            return true;
+        }
     }
     *out = 0;
     return false;
@@ -779,8 +801,7 @@ void structure_cours::import_note(QString& alias_matiere)
         std::cout<<"La note de "<< alias_matiere.toStdString()<<" de "<< liste_etudiant[i].name_.toStdString()<<" est de "<< note_value<<std::endl;
 
         set_notes( liste_etudiant[i], alias_matiere, book_in,note_value);
-        std::string sentence = "Vous avez obtenu la note de "+ std::to_string(note_value) + " en "+alias_matiere.toStdString()+".";
-        liste_etudiant[i].mail_notes(outfile, referent_, email_,tree_matiere_,sentence);
+        liste_etudiant[i].mail_notes(outfile, referent_, email_,tree_matiere_);
     }
     QString err = book_in.Save(target);
 	if (!err.isEmpty())
@@ -835,10 +856,8 @@ void structure_cours::print_tree()
 
 void structure_cours::read_ods()
 {
-//    std::cout<<" Read ods"<<std::endl;
     std::string command = "cp "+output_.toStdString()+".ods mem_ods/" + output_.toStdString() +"_"+currentDateTime()+".ods";
     int dummy = system(command.c_str());
-
 	QFile file(output_+".ods");
 	if (!file.exists())
 	{
@@ -846,11 +865,9 @@ void structure_cours::read_ods()
 		return;
 	}
 	ods::Book book_in(output_+".ods");
-
 	for (int i=0;i<liste_etudiant.size();i++)
     {
         student &e = liste_etudiant[i];
-        // std::cout<<"Reading info on student "<< e.name_.toStdString() <<std::endl;
         for (int j=0;j<liste_cours.size();j++)
         {
             matiere &m = liste_cours[j];
@@ -861,10 +878,10 @@ void structure_cours::read_ods()
 
 void structure_cours::read_notes(student &e , matiere & m, ods::Book & book_in)
 {
-    // std::cout<<" j = "<<j<<" / "<< liste_cours.size()<< " m alias  "<<  m.alias_.toStdString()<<"  option = "<< m.option_.toStdString()<<" "<< e.option_.toStdString()<<std::endl;
+//     std::cout<<"read_notes debut  m alias  "<<  m.alias_.toStdString()<<"  option = "<< m.option_.toStdString()<<" "<< e.option_.toStdString()<<std::endl;
     if ( m.option_ == "all" || m.option_ == e.option_ ) // )&& m.dep_matiere_.size() == 0)
     {
-        // std::cout<<" Searching for cell of "<< m.alias_.toStdString()<<std::endl;
+//        std::cout<<" Searching for cell of "<< m.alias_.toStdString()<<" student "<< e.name_.toStdString()<<std::endl;
         auto *sheet = book_in.sheet(m.alias_);
         int c,r;
         if ( !find_cell(&c,&r, e.name_,m.alias_,sheet))
@@ -881,10 +898,13 @@ void structure_cours::read_notes(student &e , matiere & m, ods::Book & book_in)
         n.name = m.alias_;
         n.sheet = sheet;
         n.cell = p;
+//        std::cout<<"Youhou col = "<< c<<" row = "<< r <<std::endl;
+
         n.defined = get_cell_value( sheet, p, & (n.value));
-        // std::cout<<" value = "<< n.value<<std::endl;
+//        std::cout<<"col = "<< c<<" row = "<< r <<"  value = "<< n.value<<std::endl;
         e.notes_.push_back(n);
     }
+//    std::cout<<"read_notes fin  m alias  "<<  m.alias_.toStdString()<<"  option = "<< m.option_.toStdString()<<" "<< e.option_.toStdString()<<std::endl;
 }
 
 bool structure_cours::read_project()
@@ -1033,7 +1053,7 @@ void structure_cours::read_student(QString ods_file)
 
 void structure_cours::read_xml( QString input)
 {
-//	qDebug().nospace()<<" reading "<< input;
+//	qDebug()<<" reading "<< input;
 	QDomDocument document;
 	QFile file(input);
 
@@ -1077,6 +1097,12 @@ void structure_cours::read_xml( QString input)
 			if ( !alias.isNull() ) { // We have a <name>..</name> element in the set
 				new_cours.alias_ = alias.text().trimmed();
 			}
+
+            if (new_cours.alias_ == new_cours.name_)
+            {
+                std::cerr<<"Error the name and the alias must be different : "<< new_cours.alias_.toStdString()<<std::endl;
+                exit(0);
+            }
 
 			// lecture des dépendances
 			QDomElement e = elm.firstChildElement( "dependance" );
@@ -1181,6 +1207,7 @@ void structure_cours::read_xml( QString input)
             }
         }
     }
+//    qDebug()<<" reading "<< input<<"  done";
 }
 
 void structure_cours::send_mail_profs()
@@ -1224,7 +1251,7 @@ void structure_cours::send_mail_student(QString & name)
 void structure_cours::send_mail_students( const std::string & alias)
 {
     std::ofstream outfile ("send_mail_student.sh");
-    for (int i = 0;i<liste_etudiant.size();i++) if (liste_etudiant[i].get_dep(QString::fromUtf8(alias.c_str())))
+    for (int i = 0;i<liste_etudiant.size();i++) if (liste_etudiant[i].get_dep(QString::fromUtf8(alias.c_str())) || alias =="")
     {
         liste_etudiant[i].mail_notes(outfile, referent_, email_, tree_matiere_, alias);
     }
@@ -1251,4 +1278,5 @@ void structure_cours::set_notes(student &e , QString &alias, ods::Book & book_in
     auto* row = sheet->row(r);
     auto* cell = row->cell(c);
     cell->SetValue(note_value);
+    sheet->PreSave();
 }

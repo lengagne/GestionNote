@@ -117,9 +117,16 @@ int main(int argc, char *argv[])
         }else if (command =="import_note")
         {
             QString matiere(argv[2]);
-            structure_cours cours;
-            cours.read_project();
-            cours.import_note(matiere);
+            structure_cours *cours = new structure_cours;
+            cours->read_project();
+            cours->import_note(matiere);
+            std::string command =  "libreoffice "+cours->get_output()+".ods";
+            delete cours;
+            std::cout<<"Pour que les notes soient à jour il faut ré enregistrer (avec une modif qui sert à rien)"<<std::endl;
+            std::cout<<"Etes vous prêt ?"<< std::endl;
+            getchar();
+            int dummy = system(command.c_str());
+
             structure_cours cours2;
             cours2.read_project();
             cours2.send_mail_students( matiere.toStdString() );

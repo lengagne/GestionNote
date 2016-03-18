@@ -53,6 +53,8 @@ public:
 
     void set_notes(student &e , QString & m, ods::Book& book_in, double note_value);
 
+    std::string get_output()const{ return output_.toStdString();}
+
 private:
 
     void add_main_sheet_line( ods::Book& book,  matiere * tree,ods::Row * r, int level, ods::Cell* previous);
@@ -79,6 +81,8 @@ private:
 
     // return the master and make the tree
     matiere* get_master_of_tree();
+
+
 
 private:
 	std::vector<matiere> liste_cours;
