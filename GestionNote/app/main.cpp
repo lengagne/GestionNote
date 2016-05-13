@@ -23,7 +23,6 @@
 // #include "examples1.hpp"
 // #include "examples2.hpp"
 
-#include "sample.hpp"
 #include "structure_cours.hpp"
 
 #include <ods/ods>
@@ -140,7 +139,6 @@ int main(int argc, char *argv[])
 		{
 			QString xml(argv[2]);
 			QString ods(argv[3]);
-			app::sample toto;
 
 			structure_cours cours;
 			cours.create_project(xml,ods);
@@ -156,7 +154,6 @@ int main(int argc, char *argv[])
 			QString xml(argv[2]);
 			QString ods(argv[3]);
 			QString out(argv[4]);
-			app::sample toto;
 
 			structure_cours cours;
 			cours.create_project(xml,ods,out);

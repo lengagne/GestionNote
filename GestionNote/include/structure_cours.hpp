@@ -4,7 +4,6 @@
 #include <iostream>
 #include "util.hpp"
 #include <QtXml>
-#include "Item.hpp"
 #include "profs.hpp"
 #include "student.hpp"
 #include <ods/ods>

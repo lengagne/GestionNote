@@ -76,9 +76,6 @@ add_executable(GestionNote ${GUI_TYPE} app/main.cpp)
 target_link_libraries(  GestionNote
 						NoteGestion)
 
-add_executable(test ${GUI_TYPE} app/sample.cpp)
-target_link_libraries(  test
-						NoteGestion)
 
 ### installation of the files
 
