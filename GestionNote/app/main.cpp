@@ -79,6 +79,18 @@ int main(int argc, char *argv[])
             cours.read_project();
             cours.send_mail_students( );
             return 1;
+        }else if (command =="export_rattrapage")
+        {
+            std::cout<<" export_rattrapage "<<std::endl;
+            structure_cours *cours = new structure_cours;
+            cours->read_project();
+            cours->show_rattrapage();
+
+//            cours->import_note(matiere);
+//            std::string command =  "libreoffice "+cours->get_output()+".ods";
+            delete cours;
+
+            return 1;
         }
     }else if (argc == 3)
     {
@@ -88,7 +100,9 @@ int main(int argc, char *argv[])
         {
             QString file(argv[2]);
             structure_cours cours;
+			qDebug()<<"Read xml";
             cours.read_xml(file);
+			qDebug()<<"Print tree";
             cours.print_tree();
 
             return 1;
@@ -142,6 +156,12 @@ int main(int argc, char *argv[])
 
 			structure_cours cours;
 			cours.create_project(xml,ods);
+
+            std::string cmd =  "libreoffice "+ods.toStdString()+".ods";
+            std::cout<<"Pour que le fichier soit opérationnel il faut l'ouvrir et le ré enregistrer (avec une modif qui sert à rien)"<<std::endl;
+            std::cout<<"Etes vous prêt ?"<< std::endl;
+            getchar();
+            int dummy = system(cmd.c_str());
 
 			return 1;
 		}

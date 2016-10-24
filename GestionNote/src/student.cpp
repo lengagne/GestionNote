@@ -32,7 +32,7 @@ double student::get_note(const QString& name)
     for (int i=0;i<notes_.size();i++)
         if (notes_[i].name == name)
             return notes_[i].value;
-    return 0.0;
+    return -1.0;
 }
 
 ods::Sheet* student::get_dep_sheet(const QString& name)

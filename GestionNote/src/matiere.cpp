@@ -5,6 +5,7 @@ matiere::matiere()
 {
     col_debut_ = -1;
     col_fin_ = -1;
+    nb_students_ = 0;
 }
 
 matiere::~matiere()
@@ -25,7 +26,7 @@ int matiere::get_nb_dep()
 void matiere::print(const std::string & coeff,
                     const std::string & offset)
 {
-    //std::cout<<offset<< coeff<< name_.toStdString()  <<" ("<<alias_.toStdString()<<")"<<std::endl;
+    std::cout<<offset<< name_.toStdString()  <<" ("<<alias_.toStdString()<<") coeff("<<coeff<< ")"<<std::endl;
     for (int i=0;i<dep_matiere_.size();i++)
         dep_matiere_[i]->print( "coeff (" + std::to_string(coeff_[i])+") ",offset+"\t");
 }

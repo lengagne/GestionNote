@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
 	}
 	if (argc == 2)
     {
-        std::cout<<"help new show_tree_lesson show_students show_prof send_mail_all_profs send_mail_all_students send_mail_student import_note "<<std::endl;
+        std::cout<<"help new show_tree_lesson show_students show_prof send_mail_all_profs send_mail_all_students send_mail_student import_note export_rattrapage "<<std::endl;
     }else if (argc ==3)
     {
         QString command(argv[1]);

@@ -22,7 +22,7 @@ public:
                          const QString& student_ods,
                          const QString& output = "GestionNoteOutput");
 
-    void import_note(QString& alias_matiere);
+    void import_note(QString& alias_matiere, const QString & output="");
 
     void print_cours();
 
@@ -54,6 +54,8 @@ public:
 
     std::string get_output()const{ return output_.toStdString();}
 
+    void show_rattrapage();
+
 private:
 
     void add_main_sheet_line( ods::Book& book,  matiere * tree,ods::Row * r, int level, ods::Cell* previous);
@@ -81,7 +83,7 @@ private:
     // return the master and make the tree
     matiere* get_master_of_tree();
 
-
+    unsigned int first_row_;
 
 private:
 	std::vector<matiere> liste_cours;

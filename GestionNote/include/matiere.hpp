@@ -32,10 +32,13 @@ public:
     std::vector<QString> dep_matiere_name_;
     unsigned int tree_level_;
     bool must_validate_;
+    unsigned int nb_students_;
 
     unsigned int col_debut_, col_fin_;
 
     ods::Sheet* sheet_;
+	
+	bool sheet_created_ = false;
 };
 
 

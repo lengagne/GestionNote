@@ -30,18 +30,26 @@ structure_cours::~structure_cours()
 
 void structure_cours::add_main_sheet_line( ods::Book& book, matiere * tree, ods::Row * row, int level, ods::Cell* previous)
 {
-//    qDebug()<<"La matiere "<< tree->alias_<<" a "<< tree->dads_.size()<<" parents";
+	if(tree->sheet_created_){
+        //std::cout<<" return "<<std::endl;
+        return;
+	}
+
+	//tree->sheet_created_ = true;
+
+   //qDebug()<<"La matiere "<< tree->alias_<<" a "<< tree->dads_.size()<<" parents";
 	auto *style = book.CreateCellStyle();
 	style->SetBold(true);
 	style->SetHAlignment(ods::HAlign::Center);
     auto *border = new ods::style::Border();
 
 
-//    std::cout<<  tree->alias_.toStdString() <<" cellule de début = "<< tree->col_debut_<<std::endl;
+    //std::cout<<  tree->alias_.toStdString() <<" cellule de début = "<< tree->col_debut_<<std::endl;
     ods::Cell * cell;
 
     if (tree->tree_level_ < level)
     {
+        //std::cout<<" < "<<std::endl;
         if (level == max_level_)
             border->sides_set(ods::BorderSideBottom | ods::BorderSideLeft |ods::BorderSideRight);
         else
@@ -54,6 +62,7 @@ void structure_cours::add_main_sheet_line( ods::Book& book, matiere * tree, ods:
         cell->SetStyle(style);
     }else if (tree->tree_level_ == level)
     {
+        //std::cout<<" == "<<std::endl;
         if (level == max_level_)
             border->sides_set(ods::BorderSideTop | ods::BorderSideBottom | ods::BorderSideLeft |ods::BorderSideRight);
         else
@@ -62,12 +71,11 @@ void structure_cours::add_main_sheet_line( ods::Book& book, matiere * tree, ods:
         style->SetBorder(border);
 
         cell = row->CreateCell(tree->col_debut_);
-//        std::cout<<tree->alias_.toStdString()<<"  plusieurs cellules "<< tree->get_nb_dep() <<std::endl;
-        //if (tree->alias_ == "MIE")
-//            cell->SetRowColSpan(1, 2);
+        //std::cout<<tree->alias_.toStdString()<<"s'etend sur plusieurs cellules "<< tree->get_nb_dep() <<std::endl;
+
         if (tree->col_fin_ - tree->col_debut_ > 0)
         {
-//            std::cout<<"We expand cell for "<< tree->alias_.toStdString()<<std::endl;
+            //std::cout<<"We expand cell for "<< tree->alias_.toStdString()<<std::endl;
             cell->SetRowColSpan(1, tree->col_fin_ - tree->col_debut_+1);
         }
 
@@ -88,14 +96,14 @@ void structure_cours::create_project( const QString & cours_xml,
                                     const QString& student_ods,
                                     const QString& output)
 {
-    std::cout<<" Creating project"<<std::endl;
+    //std::cout<<" Creating project"<<std::endl;
     if (read_project())
     {
         std::cerr<<"Error the project already exists you cannot create  a new one here"<<std::endl;
         exit(0);
     }
 
-    std::cout<<" Actually create project"<<std::endl;
+    //std::cout<<" Actually create project"<<std::endl;
 	QDomDocument document;
 	QFile file(PROJECT_NAME);
 
@@ -138,9 +146,11 @@ void structure_cours::create_files()
 	style_center->SetHAlignment(ods::HAlign::Center);
 
     main_sheet_ = book_master.CreateSheet(output_);
+	qDebug()<<"Creating subsheets";
     create_sub_sheet( book_master,tree_matiere_ );
+	qDebug()<<"Creating main sheet";
     create_main_sheet( book_master  );
-
+	qDebug()<<"Create main sheet done";
 	auto path = output_ + ".ods";
 	QFile target(path);
 	QString err = book_master.Save(target);
@@ -185,9 +195,10 @@ void structure_cours::create_main_sheet(  ods::Book& book)
 //	style->SetFontSize(18);
 
     unsigned int max_level_ = get_biggest_level();
-    std::cout<<"max_level_ = "<< max_level_ <<std::endl;
+    //std::cout<<"max_level_ = "<< max_level_ <<std::endl;
     for (int i=0;i<max_level_+1;i++)
     {
+        //std::cout<<"line "<< i<<" / "<< max_level_<<std::endl;
         auto *row = main_sheet_->CreateRow(start++);
         auto* cell = row->CreateCell(2);
         add_main_sheet_line( book,tree_matiere_, row, i,cell);
@@ -215,6 +226,7 @@ void structure_cours::create_main_sheet(  ods::Book& book)
     for (int i=0;i<liste_etudiant.size();i++)
     {
         student& e = liste_etudiant[i];
+		qDebug()<<"student = "<< e.name_ ;
         row = main_sheet_->CreateRow(start++);
         if (i==0)
             row_start = row;
@@ -238,10 +250,14 @@ void structure_cours::create_main_sheet(  ods::Book& book)
             {
                 auto* sheet_dep = book.sheet(current_matiere);
                 auto *row_dep = sheet_dep->row(p.row);
-                auto *cell_dep = row_dep->cell(p.col);
-                auto *formula1 = new ods::Formula();
-                formula1->Add(sheet_dep, cell_dep );
-                cell->SetFormula(formula1);
+                if (row_dep)
+                {
+                    auto *cell_dep = row_dep->cell(p.col);
+                    if(!cell_dep)   cell_dep  =  row_dep->CreateCell(p.col);
+                    auto *formula1 = new ods::Formula();
+                    formula1->Add(sheet_dep, cell_dep );
+                    cell->SetFormula(formula1);
+                }
                 cell->SetStyle(style_center);
             }else
             {
@@ -328,7 +344,7 @@ void structure_cours::create_main_sheet(  ods::Book& book)
 
 void structure_cours::create_sub_sheet(ods::Book & book, matiere * m )
 {
-    std::cout<<" Creating sheet for "<< m->alias_.toStdString()<<std::endl;
+    //std::cout<<" Creating sheet for "<< m->alias_.toStdString()<<std::endl;
     auto *style_center = book.CreateCellStyle();
     style_center->SetHAlignment(ods::HAlign::Center);
 
@@ -411,6 +427,8 @@ void structure_cours::create_sub_sheet(ods::Book & book, matiere * m )
     auto* row_start = row;
     auto* row_end = row;
     bool first = true;
+    first_row_ = start;
+    //std::cout<<" first_row_ = "<< first_row_ <<std::endl;
     for (int i=0;i<liste_etudiant.size();i++)
     {
         student& e = liste_etudiant[i];
@@ -479,7 +497,6 @@ void structure_cours::create_sub_sheet(ods::Book & book, matiere * m )
                 {
                     cell = row->cell(4+k);
                     cell->SetStyle(style_center);
-
                     if (m->dep_matiere_[k]->option_ == "all" || m->dep_matiere_[k]->option_ == e.option_ )
                     {
                         if (e.get_dep(m->dep_matiere_[k]->alias_))
@@ -487,10 +504,14 @@ void structure_cours::create_sub_sheet(ods::Book & book, matiere * m )
                             place p = e.get_dep_cell( m->dep_matiere_[k]->alias_);
                             auto* sheet_dep = book.sheet(m->dep_matiere_[k]->alias_);
                             auto *row_dep = sheet_dep->row(p.row);
-                            auto *cell_dep = row_dep->cell(p.col);
-                            auto *formula1 = new ods::Formula();
-                            formula1->Add(sheet_dep, cell_dep );
-                            cell->SetFormula(formula1);
+                            if (row_dep)
+                            {
+                                auto *cell_dep = row_dep->cell(p.col);
+                                if(!cell_dep)   cell_dep  =  row_dep->CreateCell(p.col);
+                                auto *formula1 = new ods::Formula();
+                                formula1->Add(sheet_dep, cell_dep );
+                                cell->SetFormula(formula1);
+                            }
                             cell->SetValue(m->dep_matiere_[k]->alias_);
                         }
                     }
@@ -518,7 +539,8 @@ void structure_cours::create_sub_sheet(ods::Book & book, matiere * m )
         auto *formula = new ods::Formula();
         auto* cell1 = row_start->cell(3+k);
         auto* cell2 = row_end->cell(3+k);
-        formula->Special("AVERAGE",cell1, cell2 );
+        if( cell1 != cell2)
+            formula->Special("AVERAGE",cell1, cell2 );
         cell->SetFormula(formula);
         cell->SetStyle(style_center);
     }
@@ -534,7 +556,8 @@ void structure_cours::create_sub_sheet(ods::Book & book, matiere * m )
         auto *formula = new ods::Formula();
         auto* cell1 = row_start->cell(3+k);
         auto* cell2 = row_end->cell(3+k);
-        formula->Special("MAX",cell1, cell2 );
+        if( cell1 != cell2)
+            formula->Special("MAX",cell1, cell2 );
         cell->SetFormula(formula);
         cell->SetStyle(style_center);
     }
@@ -550,7 +573,8 @@ void structure_cours::create_sub_sheet(ods::Book & book, matiere * m )
         auto *formula = new ods::Formula();
         auto* cell1 = row_start->cell(3+k);
         auto* cell2 = row_end->cell(3+k);
-        formula->Special("MIN",cell1, cell2 );
+        if( cell1 != cell2)
+            formula->Special("MIN",cell1, cell2 );
         cell->SetFormula(formula);
         cell->SetStyle(style_center);
     }
@@ -566,7 +590,8 @@ void structure_cours::create_sub_sheet(ods::Book & book, matiere * m )
         auto *formula = new ods::Formula();
         auto* cell1 = row_start->cell(3+k);
         auto* cell2 = row_end->cell(3+k);
-        formula->Special("STDEV",cell1, cell2 );
+        if( cell1 != cell2)
+            formula->Special("STDEV",cell1, cell2 );
         cell->SetFormula(formula);
         cell->SetStyle(style_center);
     }
@@ -582,7 +607,8 @@ void structure_cours::create_sub_sheet(ods::Book & book, matiere * m )
         auto *formula = new ods::Formula();
         auto* cell1 = row_start->cell(3+k);
         auto* cell2 = row_end->cell(3+k);
-        formula->Special("MEDIAN",cell1, cell2 );
+        if( cell1 != cell2)
+            formula->Special("MEDIAN",cell1, cell2 );
         cell->SetFormula(formula);
         cell->SetStyle(style_center);
     }
@@ -603,13 +629,13 @@ bool structure_cours::find_cell(int * COL, int * ROW, QString student, QString a
     int cs, rs, ca, ra;
     if (!find_cell(&cs,&rs,student,s,1))
     {
-        std::cout<<"Error cannot find "<< student.toStdString()<<std::endl;
+        std::cerr<<"Error cannot find "<< student.toStdString()<<std::endl;
         return false;
     }
 //    std::cout<<" looking for "<<alias.toStdString()<<std::endl;
     if (!find_cell(&ca,&ra,alias,s,2))
     {
-        std::cout<<"Error cannot find "<< alias.toStdString()<<std::endl;
+        std::cerr<<"Error cannot find "<< alias.toStdString()<<std::endl;
         return false;
     }
     *COL = ca;
@@ -693,7 +719,7 @@ unsigned int structure_cours::get_biggest_level()
 
 bool structure_cours::get_cell_value( ods::Sheet * sheet, const place & p, double * out)
 {
-//    std::cout<<" row = "<<p.row<<"  col = "<< p.col<<std::endl;
+    //std::cout<<" row = "<<p.row<<"  col = "<< p.col<<std::endl;
     auto * row = sheet->row(p.row);
     auto* cell = row->cell(p.col);
 
@@ -702,9 +728,10 @@ bool structure_cours::get_cell_value( ods::Sheet * sheet, const place & p, doubl
         auto* f = cell->formula();
         f->UpdateValue();
         const auto &value = cell->value();
-        //std::cout<<" read formula value ="<<*value.AsDouble()<<std::endl;
+
         if (value.IsDouble())
         {
+            //std::cout<<" read formula value ="<<*value.AsDouble()<<std::endl;
             *out =  *value.AsDouble();
             return true;
         }
@@ -724,6 +751,7 @@ bool structure_cours::get_cell_value( ods::Sheet * sheet, const place & p, doubl
 
 matiere* structure_cours::get_master_of_tree()
 {
+    //std::cout<<"get master of tree"<<std::endl;
     int nb = liste_cours.size();
     std::vector<bool> might_be_master(nb);
     for (int i=0;i<nb;i++)
@@ -777,10 +805,20 @@ matiere* structure_cours::get_master_of_tree()
     return &liste_cours[id];
 }
 
-void structure_cours::import_note(QString& alias_matiere)
+void structure_cours::import_note(QString& alias_matiere, const QString & output)
 {
     std::ofstream outfile ("send_mail_student.sh");
-	auto path = output_ + ".ods";
+    QString tmp ;
+
+	if(output == "")
+    {
+        tmp  = output_;
+    }else
+    {
+        tmp  = output;
+    }
+    auto path = tmp + ".ods";
+
 	QFile target(path);
     ods::Book book_in(path);
     ods::Book book("./notes/"+alias_matiere+".ods");
@@ -798,7 +836,7 @@ void structure_cours::import_note(QString& alias_matiere)
             std::cerr<<"Cannot find student "<< liste_etudiant[i].name_.toStdString() <<" in "<< alias_matiere.toStdString()<<std::endl;
             exit(0);
         }
-        std::cout<<"La note de "<< alias_matiere.toStdString()<<" de "<< liste_etudiant[i].name_.toStdString()<<" est de "<< note_value<<std::endl;
+        //std::cout<<"La note de "<< alias_matiere.toStdString()<<" de "<< liste_etudiant[i].name_.toStdString()<<" est de "<< note_value<<std::endl;
 
         set_notes( liste_etudiant[i], alias_matiere, book_in,note_value);
         liste_etudiant[i].mail_notes(outfile, referent_, email_,tree_matiere_);
@@ -846,6 +884,7 @@ void structure_cours::print_profs()
 
 void structure_cours::print_tree()
 {
+    //std::cout<<" structure_cours::print_tree()"<<std::endl;
     if (tree_matiere_)
         tree_matiere_->print();
     else{
@@ -878,10 +917,10 @@ void structure_cours::read_ods()
 
 void structure_cours::read_notes(student &e , matiere & m, ods::Book & book_in)
 {
-//     std::cout<<"read_notes debut  m alias  "<<  m.alias_.toStdString()<<"  option = "<< m.option_.toStdString()<<" "<< e.option_.toStdString()<<std::endl;
+    //std::cout<<"read_notes debut  m alias  "<<  m.alias_.toStdString()<<"  option = "<< m.option_.toStdString()<<" "<< e.option_.toStdString()<<std::endl;
     if ( m.option_ == "all" || m.option_ == e.option_ ) // )&& m.dep_matiere_.size() == 0)
     {
-//        std::cout<<" Searching for cell of "<< m.alias_.toStdString()<<" student "<< e.name_.toStdString()<<std::endl;
+        //std::cout<<" Searching for cell of "<< m.alias_.toStdString()<<" student "<< e.name_.toStdString()<<std::endl;
         auto *sheet = book_in.sheet(m.alias_);
         int c,r;
         if ( !find_cell(&c,&r, e.name_,m.alias_,sheet))
@@ -914,15 +953,15 @@ bool structure_cours::read_project()
 
 	if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
 	{
-		// qDebug() << "Failed to open the file for reading.";
-		// qDebug() << "You must create a project please refer to : GestionNote help";
+		 qDebug() << "Failed to open the file for reading.";
+		 qDebug() << "You must create a project please refer to : GestionNote help";
 		return false;
 	}
 	else
 	{	// loading
 		if(!document.setContent(&file))
 		{
-			// qDebug() << "Failed to load the file for reading.";
+			 qDebug() << "Failed to load the file for reading.";
 			return false;
 		}
 		file.close();
@@ -941,6 +980,10 @@ bool structure_cours::read_project()
 	referent_ ="";
     if ( !referent.isNull() ) { // We have a <name>..</name> element in the set
         referent_ = referent.text().trimmed();
+    }else
+    {
+        std::cerr<<"You must specify a referent in the xml"<<std::endl;
+        exit(0);
     }
 
     if(referent_=="")
@@ -1064,8 +1107,12 @@ void structure_cours::read_xml( QString input)
 	}
 	else
 	{	// loading
-		if(!document.setContent(&file))
+	    QString errorStr;
+        int errorLine;
+        int errorColumn;
+		if(!document.setContent(&file, false, &errorStr, &errorLine, &errorColumn))
 		{
+		     qDebug() << errorStr << " at line "<< errorLine <<" column : "<< errorColumn;
 			qDebug() << "Failed to load the file : "<< input <<" for reading.";
 			return;
 		}
@@ -1091,7 +1138,7 @@ void structure_cours::read_xml( QString input)
 				std::cerr<<"nom not found "<<std::endl;
 				exit(0);
 			}
-// 			qDebug() << new_cours.nom;
+// 			qDebug() << new_cours.name_;
 
 			QDomElement alias = elm.namedItem("alias").toElement();
 			if ( !alias.isNull() ) { // We have a <name>..</name> element in the set
@@ -1131,11 +1178,12 @@ void structure_cours::read_xml( QString input)
 			}else
 				new_cours.option_ = "all";
 
+
 			QDomElement to_validate = elm.namedItem("to_validate").toElement();
 			if ( !to_validate.isNull() ) { // We have a <name>..</name> element in the set
 				new_cours.must_validate_ =  ( to_validate.text().trimmed() =="yes" || to_validate.text().trimmed() == "oui");
 			}else
-				new_cours.must_validate_ = "all";
+				new_cours.must_validate_ = false;
 
 			new_cours.tree_level_ = -1;
 //			new_cours.sheet =  nullptr;
@@ -1279,4 +1327,58 @@ void structure_cours::set_notes(student &e , QString &alias, ods::Book & book_in
     auto* cell = row->cell(c);
     cell->SetValue(note_value);
     sheet->PreSave();
+}
+
+void structure_cours::show_rattrapage()
+{
+    std::vector<student> etudiants_rattrapage;
+    for (int i=0;i<liste_etudiant.size();i++)
+    {
+        for (int j=0;j<liste_cours.size();j++)
+        {
+            if ( ( liste_cours[j].option_ == liste_etudiant[i].option_  || liste_cours[j].option_ == "all" )&& liste_cours[j].must_validate_ )
+            {
+                if ( liste_etudiant[i].get_note(liste_cours[j].alias_) < 10 )
+                {
+                    // check already in the list
+                    bool test = true;
+                    for (int k=0;k<etudiants_rattrapage.size();k++)
+                    {
+                        if(etudiants_rattrapage[k].name_ == liste_etudiant[i].name_)
+                        {
+                            test = false;
+                            break;
+                        }
+                    }
+                    if (test)
+                    {
+                        for (int k=0;k<liste_etudiant[i].notes_.size();k++)
+                            liste_etudiant[i].notes_[k].cell.row = first_row_ + 1+etudiants_rattrapage.size();
+                        etudiants_rattrapage.push_back(liste_etudiant[i]);
+                    }
+                    qDebug()<<liste_etudiant[i].name_<<" doit rattraper : "<< liste_cours[j].name_<< " car il a "<< liste_etudiant[i].get_note(liste_cours[j].alias_);
+                }
+            }
+        }
+    }
+
+//    liste_etudiant = etudiants_rattrapage;
+//
+//    // create the file rattrapage
+//    ods::Book book_master;
+//	auto *style_center = book_master.CreateCellStyle();
+//	style_center->SetHAlignment(ods::HAlign::Center);
+//
+//    main_sheet_ = book_master.CreateSheet(output_+ "_rattrapage.ods");
+//    create_sub_sheet( book_master,tree_matiere_ );
+//    create_main_sheet( book_master  );
+//
+//	auto path = output_ + "_rattrapage.ods";
+//	QFile target(path);
+//	QString err = book_master.Save(target);
+//	if (!err.isEmpty())
+//		qDebug() << "Error saving ods file:" << err;
+//	else
+//		qDebug() << "Saved to" << target.fileName();
+
 }
