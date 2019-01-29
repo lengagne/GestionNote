@@ -35,6 +35,15 @@ double student::get_note(const QString& name)
     return -1.0;
 }
 
+void student::set_note(const QString& name, double note)
+{
+    for (int i=0;i<notes_.size();i++)
+        if (notes_[i].name == name)
+            notes_[i].value = note;
+    std::cerr<<"Error cannot find the "<< name.toStdString()<<" for the student "<< name_.toStdString()<<" "<< first_name_.toStdString()<<std::endl;
+    exit(0);
+}
+
 ods::Sheet* student::get_dep_sheet(const QString& name)
 {
     for (int i=0;i<notes_.size();i++)
@@ -88,10 +97,16 @@ void student::set_cell( const place& p ,
                         QString name)
 {
     //std::cout<<" l'etudiant "<< name_.toStdString()<<" recoit sa note de "<< name.toStdString()<< " sheet = "<< s <<" place = "<< p.col<<" "<<p.row<<std::endl;
+    for (int i=0;i< notes_.size();i++)
+        if( notes_[i].name == name )
+        {
+            notes_[i].sheet = s;
+            notes_[i].cell = p;
+            return;
+        }
     note tmp;
     tmp.name = name;
     tmp.sheet = s;
     tmp.cell = p;
-
     notes_.push_back(tmp);
 }

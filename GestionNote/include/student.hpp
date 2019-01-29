@@ -20,7 +20,7 @@ typedef struct
     ods::Sheet *sheet;
     place cell ;
     double value;
-    bool defined;
+    bool defined=false;
 }note;
 
 class student{
@@ -32,6 +32,8 @@ public:
     bool get_dep(const QString& name);
 
     double get_note(const QString& name);
+
+    void set_note(const QString& name, double note);
 
     ods::Sheet* get_dep_sheet(const QString& name);
 

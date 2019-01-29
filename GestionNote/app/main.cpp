@@ -45,7 +45,7 @@ void print_help()
 	std::cout<<"Préparer mail aux étudiants : GestionNote send_mail_all_students"<<std::endl;
 	std::cout<<"Préparer mail à un étudiant : GestionNote send_mail_student student_name"<<std::endl;
 	std::cout<<"Importer notes :  GestionNote import_note note_alias"<<std::endl;
-	std::cout<<"Créer nouveau projet :  GestionNote new lessons.xml student.ods output"<<std::endl;
+	std::cout<<"Créer nouveau projet :  GestionNote new lessons.xml student.ods redoublement.xml output"<<std::endl;
 
 }
 
@@ -147,7 +147,8 @@ int main(int argc, char *argv[])
             cours2.send_mail_students( matiere.toStdString() );
             return 1;
         }
-    }else if (argc==4)
+/*    }
+    else if (argc==4)
 	{
 		QString command(argv[1]);
 
@@ -166,8 +167,8 @@ int main(int argc, char *argv[])
             int dummy = system(cmd.c_str());
 
 			return 1;
-		}
-    }else if (argc==5)
+		}*/
+    }else if (argc==6)
 	{
 		QString command(argv[1]);
 
@@ -175,10 +176,11 @@ int main(int argc, char *argv[])
 		{
 			QString xml(argv[2]);
 			QString ods(argv[3]);
-			QString out(argv[4]);
+			QString xml_redoublement(argv[4]);
+			QString out(argv[5]);
 
 			structure_cours cours;
-			cours.create_project(xml,ods,out);
+			cours.create_project(xml,xml_redoublement,ods,out);
 
 			return 1;
 		}

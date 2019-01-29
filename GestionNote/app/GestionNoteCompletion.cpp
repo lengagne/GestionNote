@@ -68,6 +68,13 @@ int main(int argc, char* argv[])
         QString command(argv[1]);
         if(command == "new")
         {
+            std::cout<<" file: xml "<<std::endl;
+        }
+    }else if (argc ==6)
+    {
+        QString command(argv[1]);
+        if(command == "new")
+        {
             std::cout<<" output_files "<<std::endl;
         }
     }

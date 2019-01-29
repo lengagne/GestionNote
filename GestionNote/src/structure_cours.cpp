@@ -92,9 +92,10 @@ void structure_cours::add_main_sheet_line( ods::Book& book, matiere * tree, ods:
 //    std::cout<<  tree->alias_.toStdString() <<" cellule de fin = "<< tree->col_fin_<<std::endl;
 }
 
-void structure_cours::create_project( const QString & cours_xml,
-                                    const QString& student_ods,
-                                    const QString& output)
+void structure_cours::create_project(   const QString & cours_xml,
+                                        const QString & doublants,
+                                        const QString& student_ods,
+                                        const QString& output)
 {
     //std::cout<<" Creating project"<<std::endl;
     if (read_project())
@@ -123,6 +124,7 @@ void structure_cours::create_project( const QString & cours_xml,
 	xmlWriter.writeTextElement("cours", cours_xml );
 	xmlWriter.writeTextElement("students", student_ods);
 	xmlWriter.writeTextElement("output", output);
+	xmlWriter.writeTextElement("doublants", doublants);
 	xmlWriter.writeTextElement("referent", "");
 	xmlWriter.writeTextElement("referent_email", "");
 
@@ -132,9 +134,11 @@ void structure_cours::create_project( const QString & cours_xml,
     cours_xml_ = cours_xml;
 	student_ods_ = student_ods;
 	output_ = output;
+	doublants_xml_ = doublants;
 
 	read_student(student_ods_);
 	read_xml(cours_xml);
+    read_doublant( doublants );
 
     create_files();
 }
@@ -432,7 +436,6 @@ void structure_cours::create_sub_sheet(ods::Book & book, matiere * m )
     for (int i=0;i<liste_etudiant.size();i++)
     {
         student& e = liste_etudiant[i];
-        //qDebug()<<"Working on student "<< e.name_;
         if (m->option_ == "all" || m->option_ == e.option_ )
         {
             row = m->sheet_->CreateRow(start++);
@@ -453,6 +456,16 @@ void structure_cours::create_sub_sheet(ods::Book & book, matiere * m )
 
             cell = row->CreateCell(3);
             cell->SetStyle(style_center);
+
+
+            for (int i=0;i<e.notes_.size();i++)
+                if(e.notes_[i].defined &&  e.notes_[i].name == m->alias_)
+                {
+                    std::cout<<e.name_.toStdString()<<" conserve la note de "<< e.notes_[i].value<<" en "<< m->alias_.toStdString()<<std::endl;
+                    cell->SetValue(e.notes_[i].value);
+                    break;
+                }
+
             if (m->dep_matiere_.size()>0)
             {
                 //std::cout<<"in the loop"<<std::endl;
@@ -955,6 +968,74 @@ void structure_cours::print_tree()
     }
 }
 
+void structure_cours::read_doublant( const QString xml)
+{
+    std::cout<<"read_doublant start"<<std::endl;
+	QDomDocument document;
+	qDebug()<<" Try to read "<< xml;
+	QFile file(xml);
+
+	if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
+	{
+		 qDebug() << "Failed to open the file for reading:"<< xml ;
+		 exit(0);
+	}
+	else
+	{	// loading
+		if(!document.setContent(&file))
+		{
+			 qDebug() << "Failed to load the file for reading:"<< xml ;
+			 exit(0);
+		}
+		file.close();
+	}
+	QDomElement root = document.firstChildElement();
+	QDomNodeList students = root.elementsByTagName("student");
+	for(int i = 0; i < students.count(); i++)
+	{
+
+        QDomNode elm = students.at(i);
+		if(elm.isElement())
+		{
+            QDomElement Elname = elm.namedItem("NOM").toElement();
+            QString name = Elname.text().trimmed();
+            QDomElement Elfirstname = elm.namedItem("PRENOM").toElement();
+            QString firstname = Elfirstname.text().trimmed();
+            QDomNodeList notes = elm.toElement().elementsByTagName("note");
+
+            bool not_found = true;
+            for (int i = 0;i<liste_etudiant.size();i++)
+            {
+                qDebug()<<liste_etudiant[i].name_;
+                if (liste_etudiant[i].name_ == name && liste_etudiant[i].first_name_ == firstname)
+                {
+                    for(int k = 0; k < notes.count(); k++)
+                    {
+                        QDomElement elnote = notes.at(k).toElement();
+                        note e;
+
+                        e.name = elnote.attribute("ALIAS").trimmed();
+                        e.value = elnote.attribute("value").toDouble();
+                        e.defined = true;
+                        liste_etudiant[i].notes_.push_back(e);
+
+                    }
+                    not_found = false;
+                    break;
+                }
+            }
+            if(not_found)
+            {
+                std::cout<<"We cannot found the student "<< firstname.toStdString()<<" "<< name.toStdString()<<std::endl;
+                std::cout<<"Be carefull the case is the same in the ods student file as in the doublants.xml"<<std::endl;
+                exit(0);
+            }
+		}
+	}
+
+	std::cout<<"read_doublant end"<<std::endl;
+}
+
 void structure_cours::read_ods()
 {
     std::string command = "cp "+output_.toStdString()+".ods mem_ods/" + output_.toStdString() +"_"+currentDateTime()+".ods";
@@ -999,13 +1080,9 @@ void structure_cours::read_notes(student &e , matiere & m, ods::Book & book_in)
         n.name = m.alias_;
         n.sheet = sheet;
         n.cell = p;
-//        std::cout<<"Youhou col = "<< c<<" row = "<< r <<std::endl;
-
         n.defined = get_cell_value( sheet, p, & (n.value));
-//        std::cout<<"col = "<< c<<" row = "<< r <<"  value = "<< n.value<<std::endl;
         e.notes_.push_back(n);
     }
-//    std::cout<<"read_notes fin  m alias  "<<  m.alias_.toStdString()<<"  option = "<< m.option_.toStdString()<<" "<< e.option_.toStdString()<<std::endl;
 }
 
 bool structure_cours::read_project()
@@ -1037,6 +1114,9 @@ bool structure_cours::read_project()
 
     QDomElement output = root.namedItem("output").toElement();
 	output_ = output.text().trimmed();
+
+    QDomElement doublants = root.namedItem("doublants").toElement();
+	doublants_xml_ = doublants.text().trimmed();
 
 	QDomElement referent = root.namedItem("referent").toElement();
 	referent_ ="";
@@ -1098,7 +1178,6 @@ void structure_cours::read_student(QString ods_file)
         std::cerr<<" Cannot find column MESSAGERIE in your file"<<std::endl;
         exit(0);
     }
-
     find_option = find_cell( &option_col, &option_row, "OPTION",ods_file) || find_cell( &option_col, &option_row, "option",ods_file) || find_cell( &option_col, &option_row, "Option",ods_file);;
 //    std::cout<<" find_option = "<< find_option << "  option_col = "<< option_col<<std::endl;
 	QFile file(ods_file);
@@ -1156,7 +1235,7 @@ void structure_cours::read_student(QString ods_file)
 		}
 		current_row = sheet_in->row(nom_row++);
 	}
-//	std::cout<<"il y a "<< nb_etu <<" etudiants"<<std::endl;
+//	std::cout<<"end of reading sutdent file il y a "<< nb_etu <<" etudiants"<<std::endl;
 }
 
 void structure_cours::read_xml( QString input)

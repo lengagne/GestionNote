@@ -19,6 +19,7 @@ public:
 //	void add_matiere(QString prof, QString matiere);
 
     void create_project( const QString & cours_xml,
+                         const QString & doublants,
                          const QString& student_ods,
                          const QString& output = "GestionNoteOutput");
 
@@ -33,6 +34,8 @@ public:
     void print_students_name();
 
 	void print_tree();
+
+	void read_doublant(QString xml);
 
 	void read_ods();
 
@@ -99,6 +102,7 @@ private:
 	QString cours_xml_;
 	QString student_ods_;
 	QString output_;
+    QString doublants_xml_;
 
 	QString referent_;
 	QString email_;
