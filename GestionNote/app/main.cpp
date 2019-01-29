@@ -129,7 +129,9 @@ int main(int argc, char *argv[])
             return 1;
         }else if (command =="import_note")
         {
+
             QString matiere(argv[2]);
+			std::cout<<"Importing note of "<< matiere.toStdString() <<std::endl;
             structure_cours *cours = new structure_cours;
             cours->read_project();
             cours->import_note(matiere);

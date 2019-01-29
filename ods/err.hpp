@@ -50,13 +50,15 @@
 #endif
 
 #ifdef _MSC_VER
-#define mtl_warn(fmt, ...) fprintf(stderr, \
-	"%s[Warning %s %s %.3d] " fmt "%s\n", MTL_COLOR_RED, SRC_FILE_NAME, \
-	__FUNCTION__, __LINE__, __VA_ARGS__, MTL_COLOR_DEFAULT)
+#define mtl_warn(fmt, ...) 
+	//fprintf(stderr, \
+	//"%s[Warning %s %s %.3d] " fmt "%s\n", MTL_COLOR_RED, SRC_FILE_NAME, \
+	//__FUNCTION__, __LINE__, __VA_ARGS__, MTL_COLOR_DEFAULT)
 #else
-#define mtl_warn(fmt, args...) fprintf(stderr, \
-	"%s[Warning %s %s %.3d] " fmt "%s\n", MTL_COLOR_RED, SRC_FILE_NAME, \
-	__FUNCTION__, __LINE__, ##args, MTL_COLOR_DEFAULT)
+#define mtl_warn(fmt, args...) 
+	//fprintf(stderr, \
+	//"%s[Warning %s %s %.3d] " fmt "%s\n", MTL_COLOR_RED, SRC_FILE_NAME, \
+	//__FUNCTION__, __LINE__, ##args, MTL_COLOR_DEFAULT)
 #endif
 
 #define mtl_status(status) fprintf (stderr, "%s[%s %s %.3d] %s%s\n", \
@@ -65,7 +67,8 @@
 
 #define mtl_errno fprintf (stderr, "[%s %.3d] %m\n", __LINE__, __FUNCTION__)
 
-#define mtl_qline(qstr) qDebug().nospace() << MTL_COLOR_BLUE << "[" << \
+#define mtl_qline(qstr) 
+	//qDebug().nospace() << MTL_COLOR_BLUE << "[" << \
 	SRC_FILE_NAME << ' ' << __FUNCTION__ << ' ' << __LINE__ << "] " << \
 	qstr << MTL_COLOR_DEFAULT
 

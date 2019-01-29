@@ -61,12 +61,12 @@ void student::mail_notes(std::ofstream & outfile, QString & referent, QString & 
     }
     outfile <<"Je vous joins l'état actuel de vos notes \n";
     write_mail_notes(outfile, tree,"");
-
+    outfile <<"Cet état est donné uniquement à titre indicatif, il n'est en rien officiel et ne peut servir de relevé de notes. \n";
     outfile <<"\n \nBonne journée \n";
     outfile << referent.toStdString() <<"\n \n";
     outfile <<"---- Mail généré automatiquement par GestionNote :  https://github.com/lengagne/GestionNote ---\n ";
     outfile << " \" | mutt ";
-    outfile<<" -s \"[GE4A] Fichier pour notes GE4A\" -c "<<referent_email.toStdString() <<" "<< email_.toStdString()<<" ";
+    outfile<<" -s \"[GE4A] Notes de "<<alias<<"\" -c "<<referent_email.toStdString() <<" "<< email_.toStdString()<<" ";
 
     outfile<<"  "<<std::endl<<std::endl;
 }

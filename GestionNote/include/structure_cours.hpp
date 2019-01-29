@@ -68,11 +68,16 @@ private:
 
     QString get_matiere_from_col(unsigned int i);
 
-    bool find_cell(int * COL, int * ROW, QString student, QString matiere,ods::Sheet * s);
+    bool find_cell(int * COL, int * ROW, const student&  etudiant , QString matiere,ods::Sheet * s);
 
-	bool find_cell(int * COL, int * ROW, QString name,ods::Sheet * s, int count = 1);
+	bool find_cell(int * COL, int * ROW, QString name, ods::Sheet * s, int count = 1);
+
+	bool find_cell(int * COL, int * ROW, QString name, QString first_name, ods::Sheet * s, int count = 1);
 
 	bool find_cell(int * col, int * row, QString name, QString ods_file, int count = 1);
+
+	// look for two consecutive cells
+	bool find_cell(int * col, int * row, QString name, QString firstname, QString ods_file, int count = 1);
 
 	unsigned int get_biggest_level();
 

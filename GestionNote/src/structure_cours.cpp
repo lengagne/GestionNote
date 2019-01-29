@@ -623,13 +623,13 @@ QString structure_cours::get_matiere_from_col(unsigned int in)
     return "not_found";
 }
 
-bool structure_cours::find_cell(int * COL, int * ROW, QString student, QString alias, ods::Sheet * s)
+bool structure_cours::find_cell(int * COL, int * ROW, const student & etudiant, QString alias, ods::Sheet * s)
 {
 //    qDebug()<<" find_cell "<< student <<" "<< alias;
     int cs, rs, ca, ra;
-    if (!find_cell(&cs,&rs,student,s,1))
+    if (!find_cell(&cs,&rs,etudiant.name_,etudiant.first_name_,s,1))
     {
-        std::cerr<<"Error cannot find "<< student.toStdString()<<std::endl;
+        std::cerr<<"Error cannot find "<< etudiant.name_.toStdString()<< " "<< etudiant.first_name_.toStdString()<<std::endl;
         return false;
     }
 //    std::cout<<" looking for "<<alias.toStdString()<<std::endl;
@@ -642,6 +642,20 @@ bool structure_cours::find_cell(int * COL, int * ROW, QString student, QString a
     *ROW = rs;
 //    std::cout<<" col ="<< ca <<"\t row = "<<rs <<"\t\t"<<ra<<" "<< cs <<std::endl;
     return true;
+}
+
+bool  structure_cours::find_cell(int * COL, int * ROW, QString name,QString first_name,QString ods_file, int count)
+{
+	name.trimmed();
+	QFile file(ods_file);
+	if (!file.exists())
+	{
+		qDebug() << "No such file: " << ods_file;
+		return false;
+	}
+	ods::Book book_in(ods_file);
+	auto *sheet_in = book_in.sheet(0);
+	return find_cell(COL,ROW,name,first_name,sheet_in,count);
 }
 
 bool  structure_cours::find_cell(int * COL, int * ROW, QString name,QString ods_file, int count)
@@ -700,6 +714,53 @@ bool  structure_cours::find_cell(int * COL, int * ROW, QString name,ods::Sheet *
 	return false;
 }
 
+bool  structure_cours::find_cell(int * COL, int * ROW, QString name,QString firstname,ods::Sheet * sheet_in, int count)
+{
+    if (sheet_in == nullptr)
+	{
+		qDebug() << "No sheet at 0";
+		return false;
+	}
+    int cpt = 0;
+	ods::Cell *cell_read1 = nullptr;
+	ods::Cell *cell_read2 = nullptr;
+	for (int i=0;i<100;i++)
+	{
+		auto *row = sheet_in->row(i);
+		if (row == nullptr)
+		{
+			break;
+		}
+
+		for (int j=0;j<100;j++)
+		{
+			cell_read1 = row->cell(j);
+			cell_read2 = row->cell(j+1);
+			if (cell_read1 == nullptr || cell_read2 == nullptr) {
+// 				qDebug() << "No cell at " << QString::number(0);
+				break;
+			}
+			const ods::Value &value1 = cell_read1->value();
+			const ods::Value &value2 = cell_read2->value();
+			if (value1.IsString() && value2.IsString())
+			{
+				QString value_as_string1 = *value1.AsString();
+				QString value_as_string2 = *value2.AsString();
+				if (value_as_string1 == name && value_as_string2 == firstname)
+				{
+					*COL = j;
+					*ROW = i;
+					cpt++;
+					if (cpt  == count)
+                        return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+
+
 unsigned int structure_cours::get_biggest_level()
 {
 	unsigned int max = 0;
@@ -719,7 +780,7 @@ unsigned int structure_cours::get_biggest_level()
 
 bool structure_cours::get_cell_value( ods::Sheet * sheet, const place & p, double * out)
 {
-    //std::cout<<" row = "<<p.row<<"  col = "<< p.col<<std::endl;
+    std::cout<<"get_cell_value  row = "<<p.row<<"  col = "<< p.col<<std::endl;
     auto * row = sheet->row(p.row);
     auto* cell = row->cell(p.col);
 
@@ -731,16 +792,17 @@ bool structure_cours::get_cell_value( ods::Sheet * sheet, const place & p, doubl
 
         if (value.IsDouble())
         {
-            //std::cout<<" read formula value ="<<*value.AsDouble()<<std::endl;
+            std::cout<<" read formula value ="<<cell<<std::endl;
             *out =  *value.AsDouble();
             return true;
         }
     }
     {
+        std::cout<<"no Formula  "<<std::endl;
         const ods::Value &value =  cell->value();
         if (value.IsDouble())
         {
-         //   std::cout<<" read value"<<std::endl;
+            std::cout<<" read value  "<<std::endl;
             *out =  *value.AsDouble();
             return true;
         }
@@ -827,13 +889,13 @@ void structure_cours::import_note(QString& alias_matiere, const QString & output
     {
         double note_value = 0;
         int c,r;
-        find_cell(&c,&r,liste_etudiant[i].name_,alias_matiere, sheet);
+        find_cell(&c,&r,liste_etudiant[i],alias_matiere, sheet);
         place p;
         p.col = c;
         p.row = r;
         if( !get_cell_value( sheet, p, &note_value))
         {
-            std::cerr<<"Cannot find student "<< liste_etudiant[i].name_.toStdString() <<" in "<< alias_matiere.toStdString()<<std::endl;
+            std::cerr<<"Cannot find student "<< liste_etudiant[i].name_.toStdString()<<" "<< liste_etudiant[i].first_name_.toStdString() <<" in "<< alias_matiere.toStdString()<<std::endl;
             exit(0);
         }
         //std::cout<<"La note de "<< alias_matiere.toStdString()<<" de "<< liste_etudiant[i].name_.toStdString()<<" est de "<< note_value<<std::endl;
@@ -917,15 +979,15 @@ void structure_cours::read_ods()
 
 void structure_cours::read_notes(student &e , matiere & m, ods::Book & book_in)
 {
-    //std::cout<<"read_notes debut  m alias  "<<  m.alias_.toStdString()<<"  option = "<< m.option_.toStdString()<<" "<< e.option_.toStdString()<<std::endl;
+    std::cout<<"read_notes debut  m alias  "<<  m.alias_.toStdString()<<"  option = "<< m.option_.toStdString()<<" "<< e.option_.toStdString()<<std::endl;
     if ( m.option_ == "all" || m.option_ == e.option_ ) // )&& m.dep_matiere_.size() == 0)
     {
-        //std::cout<<" Searching for cell of "<< m.alias_.toStdString()<<" student "<< e.name_.toStdString()<<std::endl;
+        std::cout<<" Searching for cell of "<< m.alias_.toStdString()<<" student "<< e.name_.toStdString()<<std::endl;
         auto *sheet = book_in.sheet(m.alias_);
         int c,r;
-        if ( !find_cell(&c,&r, e.name_,m.alias_,sheet))
+        if ( !find_cell(&c,&r, e,m.alias_,sheet))
         {
-            std::cerr<<"Cannot find the student "<< e.name_.toStdString()<<" in "<< m.alias_.toStdString()<<std::endl;
+            std::cerr<<"Cannot find the student "<< e.name_.toStdString()<<  " "<<e.first_name_.toStdString()<<" in "<< m.alias_.toStdString()<<std::endl;
             exit(0);
         }
 
@@ -1003,8 +1065,11 @@ bool structure_cours::read_project()
         exit(0);
     }
 	read_xml(cours_xml_);
+	std::cout<<"read_xml ok"<<std::endl;
 	read_student(student_ods_);
+	std::cout<<"read_student ok"<<std::endl;
 	read_ods();
+	std::cout<<"read_ods ok"<<std::endl;
 	return true;
 }
 
@@ -1308,12 +1373,12 @@ void structure_cours::send_mail_students( const std::string & alias)
 
 void structure_cours::set_notes(student &e , QString &alias, ods::Book & book_in, double note_value)
 {
-    // std::cout<<" Searching for cell of "<< m.alias_.toStdString()<<std::endl;
+	//std::cout<<" Set notes for "<< alias.toStdString()<<std::endl;
     auto *sheet = book_in.sheet(alias);
     int c,r;
-    if ( !find_cell(&c,&r, e.name_,alias,sheet))
+    if ( !find_cell(&c,&r, e,alias,sheet))
     {
-        std::cerr<<"Cannot find the student "<< e.name_.toStdString()<<" in "<< alias.toStdString()<<std::endl;
+        std::cerr<<"Cannot find the student "<< e.name_.toStdString()<< " " << e.first_name_.toStdString()<<" in "<< alias.toStdString()<<std::endl;
         exit(0);
     }
 
@@ -1321,6 +1386,7 @@ void structure_cours::set_notes(student &e , QString &alias, ods::Book & book_in
     {
         e.notes_[i].value = note_value;
         e.notes_[i].defined = true;
+		std::cout<<"Student "<< e.name_.toStdString()<<" "<<e.first_name_.toStdString()<<" has "<< note_value<<std::endl;
         break;
     }
     auto* row = sheet->row(r);
