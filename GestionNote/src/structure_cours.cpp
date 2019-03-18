@@ -917,21 +917,6 @@ void structure_cours::import_note(QString& alias_matiere, const QString & output
         liste_etudiant[i].mail_notes(outfile, referent_, email_,tree_matiere_);
     }
 
-    std::cout<<"ajout du message au referent"<<std::endl;
-    outfile << " \n\n echo \"Bonjour "<<referent_.toStdString()<<", \n \n";
-    if (alias_matiere !="")
-    {
-        outfile <<"\nJe viens de recevoir les notes de "<<alias_matiere.toStdString()<<".\n";
-    }
-    outfile <<"Je vous joins l'état actuel des notes \n";
-    outfile <<"\n \nBonne journée \n";
-    outfile << referent_.toStdString() <<"\n \n";
-    outfile <<"---- Mail généré automatiquement par GestionNote :  https://github.com/lengagne/GestionNote ---\n ";
-    outfile << " \" | mutt ";
-    outfile<<" -s \"[GE4A] Notes de "<<alias_matiere.toStdString()<<" \" "<< email_.toStdString()<<" -a ./"<< output_.toStdString()<<".ods ";
-
-    outfile<<"  "<<std::endl<<std::endl;
-
     QString err = book_in.Save(target);
 	if (!err.isEmpty())
 		qDebug() << "Error saving ods file:" << err;
@@ -1463,6 +1448,21 @@ void structure_cours::send_mail_students( const std::string & alias)
     {
         liste_etudiant[i].mail_notes(outfile, referent_, email_, tree_matiere_, alias);
     }
+
+    std::cout<<"ajout du message au referent"<<std::endl;
+    outfile << " \n\n echo \"Bonjour "<<referent_.toStdString()<<", \n \n";
+    if (alias !="")
+    {
+        outfile <<"\nJe viens de recevoir les notes de "<<alias<<".\n";
+    }
+    outfile <<"Je vous joins l'état actuel des notes \n";
+    outfile <<"\n \nBonne journée \n";
+    outfile << referent_.toStdString() <<"\n \n";
+    outfile <<"---- Mail généré automatiquement par GestionNote :  https://github.com/lengagne/GestionNote ---\n ";
+    outfile << " \" | mutt ";
+    outfile<<" -s \"[GE4A] Notes de "<<alias <<" \" "<< email_.toStdString()<<" -a ./"<< output_.toStdString()<<".ods ";
+
+    outfile<<"  "<<std::endl<<std::endl;
     outfile.close();
 }
 
