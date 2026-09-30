@@ -106,6 +106,7 @@ private:
 
 	QString referent_;
 	QString email_;
+	QString nom_formation_;
 
 	unsigned int max_level_;
 

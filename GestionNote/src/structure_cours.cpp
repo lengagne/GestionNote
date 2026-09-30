@@ -121,6 +121,7 @@ void structure_cours::create_project(   const QString & cours_xml,
 
 	xmlWriter.writeStartElement("GestionNoteProject");
 
+    xmlWriter.writeTextElement("nom_formation", "nom_formation" );
 	xmlWriter.writeTextElement("cours", cours_xml );
 	xmlWriter.writeTextElement("students", student_ods);
 	xmlWriter.writeTextElement("output", output);
@@ -1185,6 +1186,18 @@ bool structure_cours::read_project()
         std::cerr<<"Please edit the file " << PROJECT_NAME<<" and add the email of the referent. found = "<< email_.toStdString()<<std::endl;
         exit(0);
     }
+
+	QDomElement nom_formation = root.namedItem("nom_formation").toElement();
+	nom_formation_ ="";
+    if ( !nom_formation.isNull() ) { // We have a <name>..</name> element in the set
+        nom_formation_ = nom_formation.text().trimmed();
+    }
+    if(nom_formation_=="")
+    {
+        std::cerr<<"Please edit the file " << PROJECT_NAME<<" and add the nom_formation_. found = "<< nom_formation_.toStdString()<<std::endl;
+        exit(0);
+    }
+
 	read_xml(cours_xml_);
 	std::cout<<"read_xml ok"<<std::endl;
 	read_student(student_ods_);
@@ -1449,7 +1462,7 @@ void structure_cours::send_mail_profs()
 
     for (int i=0;i<liste_profs.size();i++)  if(liste_profs[i].matieres_.size()>0)
     {
-        outfile <<"thunderbird -compose 'to=\''"<<liste_profs[i].email_.toStdString()<<"\'',cc='"<<email_.toStdString()<<"',subject='[FISE_S3ER_3A] Fichier pour notes',attachment='\\'";
+        outfile <<"thunderbird -compose 'to=\''"<<liste_profs[i].email_.toStdString()<<"\'',cc='"<<email_.toStdString()<<"',subject='["<< nom_formation_.toStdString() <<"] Fichier pour notes',attachment='\\'";
         for (int j=0;j<liste_profs[i].matieres_.size();j++)
         {
             outfile << "./notes/"<< liste_profs[i].matieres_[j]->alias_.toStdString()<<".ods";
