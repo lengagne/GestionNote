@@ -97,7 +97,7 @@ private:
 	std::vector<matiere> liste_cours;
 	std::vector<profs> liste_profs;
 	std::vector<student> liste_etudiant;
-	matiere* tree_matiere_;
+	matiere* tree_matiere_ = nullptr;
 
 	QString cours_xml_;
 	QString student_ods_;

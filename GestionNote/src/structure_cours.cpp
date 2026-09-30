@@ -791,37 +791,77 @@ unsigned int structure_cours::get_biggest_level()
 	return max;
 }
 
-bool structure_cours::get_cell_value( ods::Sheet * sheet, const place & p, double * out)
+// bool structure_cours::get_cell_value( ods::Sheet * sheet, const place & p, double * out)
+// {
+//     std::cout<<"get_cell_value  row = "<<p.row<<"  col = "<< p.col<<std::endl;
+//     auto * row = sheet->row(p.row);
+//     auto* cell = row->cell(p.col);
+//
+//     if (cell->HasFormula())
+//     {
+//         auto* f = cell->formula();
+//         f->UpdateValue();
+//         const auto &value = cell->value();
+//
+//         if (value.IsDouble())
+//         {
+//             std::cout<<" read formula value ="<<cell<<std::endl;
+//             *out =  *value.AsDouble();
+//             return true;
+//         }
+//     }
+//     {
+//         std::cout<<"no Formula  "<<std::endl;
+//         const ods::Value &value =  cell->value();
+//         if (value.IsDouble())
+//         {
+//             std::cout<<" read value  "<<std::endl;
+//             *out =  *value.AsDouble();
+//             return true;
+//         }
+//     }
+//     *out = 0;
+//     return false;
+// }
+
+bool structure_cours::get_cell_value(
+    ods::Sheet* sheet, const place& p, double* out)
 {
-    std::cout<<"get_cell_value  row = "<<p.row<<"  col = "<< p.col<<std::endl;
-    auto * row = sheet->row(p.row);
+    if (!out)
+        return false;
+
+    *out = 0;
+
+    if (!sheet)
+        return false;
+
+    auto* row = sheet->row(p.row);
+    if (!row)
+        return false;
+
     auto* cell = row->cell(p.col);
+    if (!cell)
+        return false;
 
     if (cell->HasFormula())
     {
         auto* f = cell->formula();
         f->UpdateValue();
-        const auto &value = cell->value();
 
-        if (value.IsDouble())
-        {
-            std::cout<<" read formula value ="<<cell<<std::endl;
-            *out =  *value.AsDouble();
-            return true;
-        }
+        const auto& value = f->value();
+        if (f->error() || !value.IsDouble() || value.NoValue())
+            return false;
+
+        *out = *value.AsDouble();
+        return true;
     }
-    {
-        std::cout<<"no Formula  "<<std::endl;
-        const ods::Value &value =  cell->value();
-        if (value.IsDouble())
-        {
-            std::cout<<" read value  "<<std::endl;
-            *out =  *value.AsDouble();
-            return true;
-        }
-    }
-    *out = 0;
-    return false;
+
+    const auto& value = cell->value();
+    if (!value.IsDouble() || value.NoValue())
+        return false;
+
+    *out = *value.AsDouble();
+    return true;
 }
 
 matiere* structure_cours::get_master_of_tree()
@@ -1405,23 +1445,26 @@ void structure_cours::read_xml( QString input)
 
 void structure_cours::send_mail_profs()
 {
-//echo -e "Bonjour Bénédicte Bousset \n Je te joins les fichiers à compléter" | mutt  -s "Fichier pour notes GEA" sebastienlengagne@yahoo.fr -a ./notes/AURO5.ods
     std::ofstream outfile ("send_mail_prof.sh");
 
     for (int i=0;i<liste_profs.size();i++)  if(liste_profs[i].matieres_.size()>0)
     {
-        outfile << "echo \"Bonjour "<<liste_profs[i].first_name_.toStdString()<<" "<< liste_profs[i].name_.toStdString()<<", \n \n";
-        outfile <<"Je te joins les fichiers à compléter concernant les matières : \\n";
+        outfile <<"thunderbird -compose 'to=\''"<<liste_profs[i].email_.toStdString()<<"\'',cc='"<<email_.toStdString()<<"',subject='[FISE_S3ER_3A] Fichier pour notes',attachment='\\'";
         for (int j=0;j<liste_profs[i].matieres_.size();j++)
-            outfile << liste_profs[i].matieres_[j]->alias_.toStdString()<<" \\n";
-        outfile <<"\n Désolé en cas de réception multiple";
+        {
+            outfile << "./notes/"<< liste_profs[i].matieres_[j]->alias_.toStdString()<<".ods";
+            if (j < liste_profs[i].matieres_.size()-1)
+                outfile<<",";
+        }
+
+        outfile<<"\\',body='Bonjour "<<liste_profs[i].first_name_.toStdString()<<" "<< liste_profs[i].name_.toStdString()<<" \n \n";
+        outfile <<"Je te joins les fichiers à compléter concernant les matières : * ";
+        for (int j=0;j<liste_profs[i].matieres_.size();j++)
+            outfile << liste_profs[i].matieres_[j]->alias_.toStdString()<<" * ";
+        outfile <<"\n \n Désolé en cas de réception multiple";
         outfile <<"\n \n Bonne journée \n";
         outfile << referent_.toStdString() <<"\n \n";
-        outfile <<"---- Mail généré automatiquement par GestionNote :  https://github.com/lengagne/GestionNote ---\n ";
-        outfile << " \" | mutt ";
-        outfile<<" -s \"[GE4A] Fichier pour notes GE4A\" -c "<<email_.toStdString() <<" "<< liste_profs[i].email_.toStdString()<<" ";
-        for (int j=0;j<liste_profs[i].matieres_.size();j++)
-            outfile << " -a ./notes/"<< liste_profs[i].matieres_[j]->alias_.toStdString()<<".ods";
+        outfile <<"---- Mail généré automatiquement par GestionNote :  https://github.com/lengagne/GestionNote ---\n '";
         outfile<<"  "<<std::endl<<std::endl;
     }
     outfile.close();
